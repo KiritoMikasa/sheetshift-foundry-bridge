@@ -240,7 +240,7 @@ export function createPanel({
       .filter((u) => u.active && !u.isGM)
       .map(
         (u) =>
-          `<label class="ss-player"><input type="checkbox" name="target" value="${esc(u.id)}" checked>${esc(u.name)}</label>`,
+          `<label class="ss-player"><input type="checkbox" name="target" value="${esc(u.id)}" checked><span>${esc(u.name)}</span></label>`,
       )
       .join(
         "",

@@ -2,11 +2,11 @@
 
 Play from the Foundry map with your Sheetshift character: a movable favourites panel, talent rolls, weapon attacks and confirmed damage, resource-backed ability cards, and GM-requested checks.
 
-Version **0.2.0** targets **Foundry VTT 14** and requires the matching Sheetshift update. The original talent bridge has been used on v14 build 360. New play actions were tested through an isolated browser simulator and automated tests; verify them together in your actual world before your next session.
+Version **0.2.1** targets **Foundry VTT 14** and requires the matching Sheetshift update. The original talent bridge has been used on v14 build 360. New play actions were tested through an isolated browser simulator and automated tests; verify them together in your actual world before your next session.
 
 ## Updating an existing installation
 
-In Foundry **Setup → Add-on Modules**, check for updates and update **Sheetshift Bridge** to **0.2.0**. Launch the same world, reload everyone's Foundry browser, and reconnect using **Sheetshift öffnen**. The manifest and Sheetshift URL stay the same. No server filesystem access, new domain, port, or Pangolin changes are required.
+In Foundry **Setup → Add-on Modules**, check for updates and update **Sheetshift Bridge** to **0.2.1**. Launch the same world, reload everyone's Foundry browser, and reconnect using **Sheetshift öffnen**. The manifest and Sheetshift URL stay the same. No server filesystem access, new domain, port, or Pangolin changes are required.
 
 ## Install from Foundry's web interface
 
@@ -70,7 +70,7 @@ Requires Node.js 22+ and Python 3. No npm dependencies are needed.
 
 ```sh
 node --test tests/*.test.mjs
-python3 scripts/package.py --tag v0.2.0
+python3 scripts/package.py --tag v0.2.1
 ```
 
 The package contains only `module.json`, `bridge.mjs`, `receiver.mjs`, `protocol.mjs`, `actions.mjs`, `panel.mjs`, and `bridge.css`, under `sheetshift-bridge/`. Tests cover the receiver and the Foundry adapter, including duplicate requests and public chat attribution.

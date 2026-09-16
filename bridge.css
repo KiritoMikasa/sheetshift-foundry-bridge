@@ -96,7 +96,7 @@
   display: block;
   margin: 8px 0;
 }
-.sheetshift-play input,
+.sheetshift-play input:not([type="checkbox"]),
 .sheetshift-play select {
   width: 100%;
   color: inherit;
@@ -105,14 +105,25 @@
   padding: 5px;
   height: 34px;
 }
-.sheetshift-play .ss-player {
+.sheetshift-play .ss-form .ss-player {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-height: 28px;
+  cursor: pointer;
 }
 .sheetshift-play input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
+  flex: 0 0 var(--checkbox-size, 20px);
+  width: var(--checkbox-size, 20px);
+  height: var(--checkbox-size, 20px);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.sheetshift-play .ss-player span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .sheetshift-play .ss-description {
   white-space: pre-wrap;

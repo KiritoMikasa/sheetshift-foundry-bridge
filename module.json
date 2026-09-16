@@ -2,7 +2,7 @@
   "id": "sheetshift-bridge",
   "title": "Sheetshift Bridge",
   "description": "Play from Foundry with Sheetshift favourites, weapon rolls, resource-backed abilities, and GM-requested checks.",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "compatibility": {
     "minimum": "14",
     "maximum": "14"
@@ -17,7 +17,7 @@
   ],
   "url": "https://github.com/KiritoMikasa/sheetshift-foundry-bridge",
   "manifest": "https://raw.githubusercontent.com/KiritoMikasa/sheetshift-foundry-bridge/main/module.json",
-  "download": "https://github.com/KiritoMikasa/sheetshift-foundry-bridge/releases/download/v0.2.0/sheetshift-bridge.zip",
+  "download": "https://github.com/KiritoMikasa/sheetshift-foundry-bridge/releases/download/v0.2.1/sheetshift-bridge.zip",
   "styles": [
     "bridge.css"
   ]

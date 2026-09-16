@@ -1,11 +1,9 @@
-Sheetshift Bridge 0.2.0 — play from the map
+Sheetshift Bridge 0.2.1 — checkbox alignment fix
 
-- Movable, collapsible favourite actions with live saved character values and connection status.
-- d100 weapon attacks: strictly under Hit; separate confirmed damage using weapon dice + Angriffskraft, without KK.
-- Ability previews and public cards after Sheetshift saves the configured resource cost.
-- GM-requested talent/attribute checks with player confirmation.
-- Validated action snapshots and authenticated GM requests; existing duplicate protection retained.
+- Align player checkboxes and names in the GM “Probe anfordern” form.
+- Keep text-field padding and borders away from Foundry checkbox icons.
+- Keep long player names readable without squeezing the checkbox.
 
-Requires the matching Sheetshift deployment. Update in Foundry Setup → Add-on Modules, reload the world and player tabs, then reconnect with Sheetshift öffnen. No new domain, port, or Pangolin changes are needed.
+Compatible with the existing Sheetshift deployment for bridge 0.2.0. Update Sheetshift Bridge in Foundry Setup → Add-on Modules, then relaunch the world and reload player tabs. Reconnect through Sheetshift öffnen as usual. The manifest URL and connection settings stay the same.
 
-Automated tests and a browser simulator passed. Please verify the new flows together in the actual Foundry world before the next session.
+Verified checkbox alignment, label clicks, and keyboard selection in the local browser preview; module tests and release packaging passed.
