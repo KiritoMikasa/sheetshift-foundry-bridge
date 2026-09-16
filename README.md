@@ -1,8 +1,12 @@
 # Sheetshift Bridge
 
-Send talent checks from your Sheetshift character sheet to Foundry VTT's public chat. Foundry rolls `1d20 + Talent + Attribute modifier + Bonus` as the currently signed-in player, then sends the confirmed result back to the sheet.
+Play from the Foundry map with your Sheetshift character: a movable favourites panel, talent rolls, weapon attacks and confirmed damage, resource-backed ability cards, and GM-requested checks.
 
-This first preview targets **Foundry VTT 14**. Automated tests use a mocked Foundry API; compatibility still needs verification in a real Foundry world. Your Sheetshift website must also include the Foundry connection feature.
+Version **0.2.0** targets **Foundry VTT 14** and requires the matching Sheetshift update. The original talent bridge has been used on v14 build 360. New play actions were tested through an isolated browser simulator and automated tests; verify them together in your actual world before your next session.
+
+## Updating an existing installation
+
+In Foundry **Setup → Add-on Modules**, check for updates and update **Sheetshift Bridge** to **0.2.0**. Launch the same world, reload everyone's Foundry browser, and reconnect using **Sheetshift öffnen**. The manifest and Sheetshift URL stay the same. No server filesystem access, new domain, port, or Pangolin changes are required.
 
 ## Install from Foundry's web interface
 
@@ -49,7 +53,12 @@ GitHub hosts the module code and download only. Character data and roll messages
 ## During play
 
 - All bridge rolls are **public**, even if Foundry's chat roll selector is set to a private mode.
-- The first version handles talent checks; it does not automate damage, resources, rests, or house rules.
+- In Sheetshift, open **Foundry-Aktionen** to star favourite talents/weapons and configure weapon damage dice and ability resource/cost. Ability favourites reuse the existing stars.
+- Back on the map, **Sheetshift-Aktionen** shows those saved values. Drag its heading to move it; collapse it with the minus button. Actions pause when the sheet is stale or disconnected.
+- Attacks roll **1d100 strictly below the weapon Hit value**. Equality misses. After the GM confirms the hit, choose **Treffer bestätigt · Schaden**. Damage is **weapon dice + Angriffskraft**, without KK. Defence, criticals, damage application, and rests remain manual.
+- Ability use previews the effect and resource cost. Confirmation saves the debit in Sheetshift first, then posts a public card. Retrying the same pending operation never spends twice. If confirmation is lost, use **Foundry-Aktionen → Dieselbe Aktion fortsetzen** in the sheet; check the resource and chat before explicitly closing an uncertain action.
+- GMs open **Sheetshift-Aktionen → Probe anfordern**, type the exact talent name, choose an attribute and players, then send. Each connected player gets a two-minute prompt using their own values and confirms the public roll. Ambiguous talent names are not guessed.
+- No hidden/GM dice mode, automatic critical rule, or automatic target damage is added.
 - After reloading Foundry, open Sheetshift from Foundry again and approve the new connection. Independently opened tabs cannot pair.
 - If a roll times out, check chat before trying another roll. **Status prüfen · kein neuer Wurf** checks the original receipt without rolling again.
 - If the bridge is offline, Sheetshift can copy the prepared `/r ...` command for Foundry chat.
@@ -61,11 +70,15 @@ Requires Node.js 22+ and Python 3. No npm dependencies are needed.
 
 ```sh
 node --test tests/*.test.mjs
-python3 scripts/package.py --tag v0.1.0
+python3 scripts/package.py --tag v0.2.0
 ```
 
-The package contains only `module.json`, `bridge.mjs`, `receiver.mjs`, and `protocol.mjs`, under `sheetshift-bridge/`. Tests cover the receiver and the Foundry adapter, including duplicate requests and public chat attribution.
+The package contains only `module.json`, `bridge.mjs`, `receiver.mjs`, `protocol.mjs`, `actions.mjs`, `panel.mjs`, and `bridge.css`, under `sheetshift-bridge/`. Tests cover the receiver and the Foundry adapter, including duplicate requests and public chat attribution.
 
 To release, update the manifest version and its versioned download URL, update release notes, commit, and push a matching `v<version>` tag. GitHub Actions runs tests, builds the ZIP, and publishes a preview release. Keep the manifest on `main` aligned with a published release before asking users to update.
 
 See Foundry's [module installation guide](https://foundryvtt.com/article/modules/) and [module development documentation](https://foundryvtt.com/article/module-development/).
+
+GM requests use normal Foundry chat documents and validate both the initiating GM user and document author. Flags alone cannot grant GM authority. Only saved action values are shared with the player's paired Foundry tab; passwords and full character files are not sent. Foundry evaluates dice in the player browser; this integration is not an anti-cheat service.
+
+Ability debit and chat posting are separate operations. A cost can be saved while the chat post is unconfirmed. Sheetshift keeps an operation receipt and browser recovery entry; Foundry keeps its own deduplication receipt. Recovery never silently rerolls. Keep both tabs open during play.

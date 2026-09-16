@@ -6,6 +6,8 @@ test('module opens configured sheet and produces a native public Foundry chat ro
   const hooks = new Map(), listeners = new Map(), messages = [], calls = [];
   const popup = { closed: false, focus: () => {}, postMessage: (message, origin) => messages.push({ message, origin }) };
   const storage = new Map();
+  const element = () => ({ classList: { toggle() {} }, setAttribute() {}, append() {}, querySelector: () => element(), querySelectorAll: () => [], insertAdjacentHTML() {} });
+  globalThis.document = { createElement: element, body: element() };
   globalThis.Hooks = { once: (name, fn) => hooks.set(name, fn), on: (name, fn) => hooks.set(name, fn) };
   globalThis.window = { addEventListener: (name, fn) => listeners.set(name, fn), removeEventListener: name => listeners.delete(name),
     open: (url, name) => { calls.push({ url, name }); return popup; }, sessionStorage: { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value) } };

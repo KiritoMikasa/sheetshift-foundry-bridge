@@ -6,7 +6,7 @@ from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 ROOT = Path(__file__).resolve().parents[1]
-FILES = ("module.json", "bridge.mjs", "receiver.mjs", "protocol.mjs")
+FILES = ("module.json", "bridge.mjs", "receiver.mjs", "protocol.mjs", "actions.mjs", "panel.mjs", "bridge.css")
 REPOSITORY = "https://github.com/KiritoMikasa/sheetshift-foundry-bridge"
 
 

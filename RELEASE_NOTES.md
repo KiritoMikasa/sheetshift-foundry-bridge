@@ -1,11 +1,11 @@
-Initial preview of Sheetshift Bridge for Foundry VTT 14.
+Sheetshift Bridge 0.2.0 — play from the map
 
-- Open a connected Sheetshift tab from Foundry's settings sidebar.
-- Send talent checks to native public Foundry chat as the current player.
-- Return the confirmed total to Sheetshift.
-- Require explicit pairing and validate message source, origin, nonce, and roll values.
-- Preserve request receipts so lost acknowledgements do not cause duplicate rolls.
+- Movable, collapsible favourite actions with live saved character values and connection status.
+- d100 weapon attacks: strictly under Hit; separate confirmed damage using weapon dice + Angriffskraft, without KK.
+- Ability previews and public cards after Sheetshift saves the configured resource cost.
+- GM-requested talent/attribute checks with player confirmation.
+- Validated action snapshots and authenticated GM requests; existing duplicate protection retained.
 
-Requires the matching Foundry connection feature on your Sheetshift website. Automated tests pass with a mocked Foundry API; a real Foundry world still needs to be tested.
+Requires the matching Sheetshift deployment. Update in Foundry Setup → Add-on Modules, reload the world and player tabs, then reconnect with Sheetshift öffnen. No new domain, port, or Pangolin changes are needed.
 
-Installation and connection instructions are in the repository README.
+Automated tests and a browser simulator passed. Please verify the new flows together in the actual Foundry world before the next session.
