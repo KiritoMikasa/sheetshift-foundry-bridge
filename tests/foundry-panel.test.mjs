@@ -134,3 +134,12 @@ test('GM talent selection resolves the matching row when names are duplicated', 
   button.onclick();
   assert.equal(f.submit().actionId, 'talent:1', 'use the selected row, never the GM character value or another same-name talent');
 });
+
+test('damage preserves each hit target even after the player changes their current target',()=>{
+  const context=label=>({actorId:'actor',source:'Scene.scene.Token.hero',targets:[{uuid:`Scene.scene.Token.${label}`,label}]});
+  let target=context('first');
+  const tabletop={prepare:(_a,previous)=>previous || target,preview(){},clearPreview(){},snapshot(){},clear(){},renderAddons(){},icon:()=> 'fa-sword',combat:{turn:()=>null},validate:()=>true};
+  const f=fixture({tabletop});const first=f.roll(0,20);target=context('second');const second=f.roll(1,30);
+  assert.equal(first.map.targets[0].label,'first');assert.equal(second.map.targets[0].label,'second');
+  f.buttons('Treffer bestätigt')[0].onclick();assert.equal(f.submit().map.targets[0].label,'first');
+});

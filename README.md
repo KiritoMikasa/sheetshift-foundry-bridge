@@ -2,11 +2,11 @@
 
 Play from the Foundry map with your Sheetshift character: a movable favourites panel, talent rolls, weapon attacks and confirmed damage, ability cards with optional resource costs, and GM-requested checks.
 
-Version **0.3.0** targets **Foundry VTT 14** and requires the matching Sheetshift update. The original talent bridge has been used on v14 build 360. New play actions were tested through an isolated browser simulator and automated tests; verify them together in your actual world before your next session.
+Version **0.4.0** targets **Foundry VTT 14** and requires the matching Sheetshift update. The original talent bridge has been used on v14 build 360. New play actions were tested through an isolated browser simulator and automated tests; verify them together in your actual world before your next session.
 
 ## Updating an existing installation
 
-In Foundry **Setup → Add-on Modules**, check for updates and update **Sheetshift Bridge** to **0.3.0**. Launch the same world, reload everyone's Foundry browser, and reconnect using **Sheetshift öffnen**. The manifest and Sheetshift URL stay the same. No server filesystem access, new domain, port, or Pangolin changes are required.
+In Foundry **Setup → Add-on Modules**, check for updates and update **Sheetshift Bridge** to **0.4.0**. Launch the same world, reload everyone's Foundry browser, and reconnect using **Sheetshift öffnen**. The manifest and Sheetshift URL stay the same. No server filesystem access, new domain, port, or Pangolin changes are required.
 
 ## Install from Foundry's web interface
 
@@ -65,21 +65,23 @@ GitHub hosts the module code and download only. Character data and roll messages
 - If the bridge is offline, Sheetshift can copy the prepared `/r ...` command for Foundry chat.
 - The module validates the source window, origin, session nonce, and structured roll values. Session storage prevents re-executing a request after a lost acknowledgement. It refuses to roll when it cannot save a receipt.
 
+See [the tabletop setup and privacy guide](TABLETOP.md) for linking owned tokens, optional animations, manual turn reminders and GM-only encrypted status.
+
 ## Development
 
-Requires Node.js 22+ and Python 3. No npm dependencies are needed.
+Requires Node.js 22+ and Python 3. Runtime modules and the crypto bundle are included; no npm installation is needed to run tests or package. To regenerate the bundled crypto, run `npm ci && npm run build:crypto` (development dependencies only).
 
 ```sh
 node --test tests/*.test.mjs
-python3 scripts/package.py --tag v0.3.0
+python3 scripts/package.py --tag v0.4.0
 ```
 
-The package contains only `module.json`, `bridge.mjs`, `receiver.mjs`, `protocol.mjs`, `actions.mjs`, `panel.mjs`, `bridge.css`, `gm-requests.mjs`, and `talents.mjs`, under `sheetshift-bridge/`. Tests cover the receiver and the Foundry adapter, including duplicate requests and public chat attribution.
+The package allowlist includes the core bridge, tabletop modules and crypto license notices under `sheetshift-bridge/`. It never includes developer dependencies, tests, keys or character files.
 
 To release, update the manifest version and its versioned download URL, update release notes, commit, and push a matching `v<version>` tag. GitHub Actions runs tests, builds the ZIP, and publishes a preview release. Keep the manifest on `main` aligned with a published release before asking users to update.
 
 See Foundry's [module installation guide](https://foundryvtt.com/article/modules/) and [module development documentation](https://foundryvtt.com/article/module-development/).
 
-GM requests use normal Foundry chat documents and validate both the initiating GM user and document author. Flags alone cannot grant GM authority. Only saved action values are shared with the player's paired Foundry tab; passwords and full character files are not sent. Foundry evaluates dice in the player browser; this integration is not an anti-cheat service.
+GM requests use normal Foundry chat documents and validate both the initiating GM user and document author. Flags alone cannot grant GM authority. Saved action values and the owner’s status are shared with the player's paired Foundry tab; passwords and full character files are not sent. Foundry evaluates dice in the player browser; this integration is not an anti-cheat service.
 
 Ability debit and chat posting are separate operations. A cost can be saved while the chat post is unconfirmed. Sheetshift keeps an operation receipt and browser recovery entry; Foundry keeps its own deduplication receipt. Recovery never silently rerolls. Keep both tabs open during play.

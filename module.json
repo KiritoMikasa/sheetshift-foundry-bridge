@@ -1,8 +1,8 @@
 {
   "id": "sheetshift-bridge",
   "title": "Sheetshift Bridge",
-  "description": "Play from Foundry with Sheetshift favourites, weapon rolls, abilities with optional resource costs, and searchable GM requests with free dice rolls.",
-  "version": "0.3.0",
+  "description": "Owned-token action HUD, target and area previews, optional ability animations, private GM status sharing, turn reminders, and tracked GM checks.",
+  "version": "0.4.0",
   "compatibility": {
     "minimum": "14",
     "maximum": "14"
@@ -17,7 +17,7 @@
   ],
   "url": "https://github.com/KiritoMikasa/sheetshift-foundry-bridge",
   "manifest": "https://raw.githubusercontent.com/KiritoMikasa/sheetshift-foundry-bridge/main/module.json",
-  "download": "https://github.com/KiritoMikasa/sheetshift-foundry-bridge/releases/download/v0.3.0/sheetshift-bridge.zip",
+  "download": "https://github.com/KiritoMikasa/sheetshift-foundry-bridge/releases/download/v0.4.0/sheetshift-bridge.zip",
   "styles": [
     "bridge.css"
   ]

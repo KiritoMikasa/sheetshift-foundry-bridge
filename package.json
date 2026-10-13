@@ -1,0 +1,15 @@
+{
+  "name": "sheetshift-foundry-bridge-development",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:crypto": "node scripts/build-crypto.mjs",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "devDependencies": {
+    "@noble/ciphers": "2.4.0",
+    "@noble/curves": "2.4.0",
+    "@noble/hashes": "2.4.0",
+    "esbuild": "~0.28.2"
+  }
+}

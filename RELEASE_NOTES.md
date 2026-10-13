@@ -1,3 +1,16 @@
+Sheetshift Bridge 0.4.0 — tabletop companion
+
+- Owned-actor linking and grouped action HUD with icons and saved HP/resources/effects.
+- Target portraits, scene-unit range warnings and temporary private area previews. Weapon hits retain their original targets for damage.
+- Optional curated Sequencer/JB2A animations; native Dice So Nice rolls and FXMaster availability hints.
+- Opt-in encrypted status for GMs, local token overlays and live party dashboard. Exact values are never stored in public Actor fields or plaintext chat flags.
+- Turn reminders and explicit GM-approved turn-end requests. Defence, condition mechanics, movement and damage application remain manual.
+- Native GM request progress with waiting/rolled/expired results and reload recovery.
+
+Deploy the matching Sheetshift update, update the module through Setup → Add-on Modules, relaunch/reload the existing world, reconnect from Sheetshift öffnen, and link each owned actor. Optional visual add-ons are enabled by the GM through the normal module installer. No new port/domain/Pangolin exception is needed. See TABLETOP.md for the complete setup and acceptance checklist.
+
+---
+
 Sheetshift Bridge 0.3.0 — smoother combat and GM requests
 
 - Keep each successful weapon attack available for its own confirmed damage roll, including two weapons with the same name. Discard defended hits explicitly.
