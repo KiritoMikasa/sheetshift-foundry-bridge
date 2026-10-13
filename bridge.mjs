@@ -1,7 +1,7 @@
 import { CHANNEL, escapeHtml, randomId, sheetUrl } from "./protocol.mjs";
 import { createReceiver } from "./receiver.mjs";
 
-import { actionFormula, gmCheck } from "./actions.mjs";
+import { actionFormula, gmCheck, validCheckRequest } from "./actions.mjs";
 import { createPanel } from "./panel.mjs";
 
 let panel;
@@ -14,6 +14,32 @@ function stop() {
   clearInterval(connection.timer);
   connection = undefined;
   panel?.clear();
+}
+
+async function executeRequest(request) {
+  if (!game.ready || !game.user?.active || !game.socket?.connected) throw new Error("Foundry is offline");
+  if (request.kind === "ability") {
+    const message = await foundry.documents.ChatMessage.create({
+      speaker: { alias: game.user.name },
+      content: `<h3>${escapeHtml(request.character)} · ${escapeHtml(request.talent)}</h3><p>${escapeHtml(request.description).replace(/\n/g, "<br>")}</p>${request.cost > 0 ? `<p>${request.cost} ${escapeHtml(request.resource)} verbraucht · Sheetshift</p>` : "<p>Gewirkt · Sheetshift</p>"}`,
+      flags: { [ID]: { requestId: request.id } },
+    });
+    if (!message?.id) throw new Error("Chat message was not created");
+    return { total: 0, die: 0, formula: "", messageId: message.id };
+  }
+  const roll = new foundry.dice.Roll(actionFormula(request));
+  await roll.evaluate({ allowInteractive: false });
+  const message = await roll.toMessage({
+    speaker: { alias: game.user.name },
+    flavor: `<strong>${escapeHtml(request.character)} · ${escapeHtml(request.talent)}</strong><br>`
+      + (request.kind === "attack" ? `Treffer: 1d100 &lt; ${request.target} · ${roll.total < request.target ? "Probe gelungen — Verteidigung abwarten" : "Verfehlt"}`
+        : request.kind === "damage" ? "Bestätigter Treffer · Waffenschaden + Angriffskraft"
+        : request.kind === "free" ? `Freier Wurf: ${escapeHtml(actionFormula(request))}`
+        : `${escapeHtml(request.attribute)} · Talent ${request.score} · Attribut ${request.modifier} · Bonus ${request.bonus}`) + " · Sheetshift",
+    flags: { [ID]: { requestId: request.id } },
+  }, { messageMode: "public" });
+  if (!message?.id) throw new Error("Chat message was not created");
+  return { total: roll.total, die: roll.dice[0]?.total, formula: actionFormula(request), messageId: message.id };
 }
 
 export function openSheet() {
@@ -36,36 +62,13 @@ export function openSheet() {
     isOnline: () => Boolean(game.socket?.connected),
     onMessage: data => { if (data.type === "snapshot") panel?.snapshot(data.snapshot); if (data.type === "actionError") panel?.receipt(data); },
     storage: window.sessionStorage, storageKey: `${ID}:${game.world.id}:${game.user.id}`,
-    execute: async request => {
-      if (!game.ready || !game.user?.active || !game.socket?.connected) throw new Error("Foundry is offline");
-      if (request.kind === "ability") {
-        const message = await foundry.documents.ChatMessage.create({
-          speaker: { alias: game.user.name },
-          content: `<h3>${escapeHtml(request.character)} · ${escapeHtml(request.talent)}</h3><p>${escapeHtml(request.description).replace(/\n/g, "<br>")}</p><p>${request.cost} ${escapeHtml(request.resource)} verbraucht · Sheetshift</p>`,
-          flags: { [ID]: { requestId: request.id } },
-        });
-        if (!message?.id) throw new Error("Chat message was not created");
-        return { total: 0, die: 0, formula: "", messageId: message.id };
-      }
-      const roll = new foundry.dice.Roll(actionFormula(request));
-      await roll.evaluate({ allowInteractive: false });
-      const message = await roll.toMessage({
-        speaker: { alias: game.user.name },
-        flavor: `<strong>${escapeHtml(request.character)} · ${escapeHtml(request.talent)}</strong><br>`
-          + (request.kind === "attack" ? `Treffer: 1d100 &lt; ${request.target} · ${roll.total < request.target ? "Probe gelungen — Verteidigung abwarten" : "Verfehlt"}`
-            : request.kind === "damage" ? "Bestätigter Treffer · Waffenschaden + Angriffskraft"
-            : `${escapeHtml(request.attribute)} · Talent ${request.score} · Attribut ${request.modifier} · Bonus ${request.bonus}`) + " · Sheetshift",
-        flags: { [ID]: { requestId: request.id } },
-      }, { messageMode: "public" });
-      if (!message?.id) throw new Error("Chat message was not created");
-      return { total: roll.total, die: roll.dice[0]?.total, formula: actionFormula(request), messageId: message.id };
-    },
+    execute: executeRequest,
   });
   window.addEventListener("message", receive);
   const hello = () => {
     panel?.tick();
     if (popup.closed) { stop(); return; }
-    if (game.socket?.connected) send({ channel: CHANNEL, nonce, type: "hello", features: ["play-actions-v1"], player: game.user.name, world: game.world.title });
+    if (game.socket?.connected) send({ channel: CHANNEL, nonce, type: "hello", features: ["play-actions-v1", "resource-free-abilities-v1"], player: game.user.name, world: game.world.title });
     else send({ channel: CHANNEL, nonce, type: "disconnected" });
   };
   connection = { popup, origin: url.origin, nonce, send, receive, timer: setInterval(hello, 2000) };
@@ -80,12 +83,23 @@ Hooks.once("init", () => {
   });
 });
 Hooks.once("ready", () => {
+  const source = {}, origin = "foundry-panel", nonce = randomId();
+  const local = createReceiver({ source, origin, nonce, execute: executeRequest,
+    send: data => { if (data.type === "result") panel?.receipt(data); },
+    storage: window.sessionStorage, storageKey: `${ID}:${game.world.id}:${game.user.id}`,
+    isOnline: () => Boolean(game.ready && game.user?.active && game.socket?.connected) });
+  const localEvent = (type, request = {}) => ({ source, origin, data: { channel: CHANNEL, nonce, type, request } });
+  void local(localEvent("accept"));
   panel = createPanel({ openSheet, online: () => Boolean(connection && !connection.popup.closed && game.socket?.connected),
     invoke: invocation => connection?.send({ channel: CHANNEL, nonce: connection.nonce, type: "invoke", invocation }),
-    status: id => { if (connection) void connection.receive({ source: connection.popup, origin: connection.origin, data: { channel: CHANNEL, nonce: connection.nonce, type: "status", request: { id } } }); },
+    rollFree: request => local(localEvent("roll", request)),
+    canRollFree: () => Boolean(game.ready && game.user?.active && game.socket?.connected),
+    status: (id, isLocal) => { if (isLocal) { void local(localEvent("status", { id })); return; } if (connection) void connection.receive({ source: connection.popup, origin: connection.origin, data: { channel: CHANNEL, nonce: connection.nonce, type: "status", request: { id } } }); },
     requestCheck: async check => {
-      if (!game.user.isGM) throw new Error("GM only");
-      return foundry.documents.ChatMessage.create({ content: `<strong>Probe angefordert: ${escapeHtml(check.talent)} + ${escapeHtml(check.attribute)}</strong><p>In Sheetshift-Aktionen bestätigen · 2 Minuten gültig.</p>`, whisper: [...check.targets, game.user.id], flags: { [ID]: { check } } });
+      if (!game.user.isGM || !validCheckRequest(check)) throw new Error("Invalid GM request");
+      const message = await foundry.documents.ChatMessage.create({ content: `<strong>Probe angefordert: ${check.kind === "free" ? `${escapeHtml(check.label)} · ${escapeHtml(check.formula)}` : `${escapeHtml(check.talent)} + ${escapeHtml(check.attribute)}`}</strong><p>In Sheetshift-Aktionen bestätigen · 2 Minuten gültig.</p>`, whisper: [...check.targets, game.user.id], flags: { [ID]: { check } } });
+      if (!message?.id) throw new Error("Request was not created");
+      return message;
     },
   });
   game.modules.get(ID).api = { openSheet, openActions: () => panel.show() };
@@ -93,7 +107,7 @@ Hooks.once("ready", () => {
 Hooks.on("createChatMessage", (message, _options, userId) => {
   // The initiating user is supplied by Foundry's document operation, never a claimed flag.
   const check = gmCheck(message, game.users.get(userId), game.user);
-  if (check) { panel?.check(check); ui.notifications.info(`${check.gm}: ${check.talent} + ${check.attribute} angefordert`); }
+  if (check) { panel?.check(check); ui.notifications.info(check.kind === "free" ? `${check.gm}: ${check.label} · ${check.formula} angefordert` : `${check.gm}: ${check.talent} + ${check.attribute} angefordert`); }
 });
 Hooks.on("renderSettings", (_app, element) => {
   const root = element instanceof HTMLElement ? element : element?.[0];

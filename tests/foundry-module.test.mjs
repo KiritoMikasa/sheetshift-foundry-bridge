@@ -20,13 +20,16 @@ test('module opens configured sheet and produces a native public Foundry chat ro
     async evaluate(options) { assert.equal(options.allowInteractive, false); executed++; this.total = 20; this.dice = [{ total: 13 }]; }
     async toMessage(data, options) { chatData = data; chatOptions = options; return { id: 'native-message' }; }
   } } };
+  const cards = [];
+  globalThis.foundry.documents = { ChatMessage: { create: async data => { cards.push(data); return { id: 'ability-card' }; } } };
+  let now = Date.now(); const realNow = Date.now; Date.now = () => now;
   const { openSheet } = await import('../bridge.mjs');
   hooks.get('init')(); hooks.get('ready')();
   openSheet();
   try {
     assert.equal(calls[0].url, 'https://sheet.example/vault');
     const nonce = messages[0].message.nonce;
-    const request = { id: 'b'.repeat(32), character: '<img src=x onerror=alert(1)>', talent: 'Schleichen', attribute: 'GE', score: 6, modifier: 3, bonus: -2 };
+    let request = { id: 'b'.repeat(32), character: '<img src=x onerror=alert(1)>', talent: 'Schleichen', attribute: 'GE', score: 6, modifier: 3, bonus: -2 };
     const event = type => ({ source: popup, origin: 'https://sheet.example', data: { channel: CHANNEL, nonce, type, request } });
     await listeners.get('message')(event('accept'));
     await listeners.get('message')(event('roll'));
@@ -37,7 +40,20 @@ test('module opens configured sheet and produces a native public Foundry chat ro
     assert.ok(chatData.flavor.includes('&lt;img')); assert.ok(!chatData.flavor.includes('<img'));
     assert.equal(messages.at(-1).message.result.messageId, 'native-message');
     assert.equal(messages.at(-1).origin, 'https://sheet.example');
+    for (const [cost, resource] of [[0, ''], [0, 'Energie'], [3, 'Energie']]) {
+      now += 1000;
+      request = { id: String(cards.length + 1).repeat(32), character: 'Hero', talent: 'Spark', kind: 'ability', cost, resource, description: '<img src=x onerror=alert(1)>Effect' };
+      await listeners.get('message')(event('roll'));
+      await listeners.get('message')(event('roll'));
+      assert.equal(cards.length, cost > 0 ? 3 : resource ? 2 : 1, 'duplicate ability invocation sends one card');
+      const card = cards.at(-1);
+      assert.ok(card.content.includes('Spark'));
+      assert.ok(card.content.includes('&lt;img')); assert.ok(!card.content.includes('<img'));
+      assert.equal(card.content.includes('verbraucht'), cost > 0);
+      if (!cost) assert.ok(card.content.includes('Gewirkt'));
+      assert.equal(messages.at(-1).message.result.messageId, 'ability-card');
+    }
     openSheet();
     assert.equal(calls.length, 1, 'opening the bridge again must not navigate away from sheet drafts');
-  } finally { listeners.get('beforeunload')(); }
+  } finally { Date.now = realNow; listeners.get('beforeunload')(); }
 });

@@ -1,5 +1,6 @@
-import { ATTRIBUTES, validSnapshot, validDice } from "./actions.mjs";
+import { validSnapshot, validDice } from "./actions.mjs";
 import { escapeHtml as esc, randomId } from "./protocol.mjs";
+import { requestForm } from "./gm-requests.mjs";
 
 // All user-supplied content is text/escaped markup. No arbitrary formulas or macros.
 export function createPanel({
@@ -8,6 +9,8 @@ export function createPanel({
   requestCheck,
   openSheet,
   online,
+  rollFree,
+  canRollFree = online,
 }) {
   let root,
     snapshot,
@@ -20,8 +23,13 @@ export function createPanel({
     lastReady = false,
     gmEditing = false;
   const checks = new Map();
+  const hits = new Map();
+  const completedChecks = new Set();
   function fresh() {
     return snapshot && online() && Date.now() - seen < 15000 && !snapshot.busy;
+  }
+  function connectionText() {
+    return fresh() ? `● ${snapshot.character} · verbunden` : canRollFree() ? "● Foundry bereit · Bogen nicht bereit" : "○ Foundry offline · Aktionen pausiert";
   }
   function show() {
     if (!root) {
@@ -63,8 +71,9 @@ export function createPanel({
     const body = document.createElement("div");
     body.className = "ss-body";
     root.append(body);
-    body.innerHTML = `<p class="ss-status">${fresh() ? `● ${esc(snapshot.character)} · verbunden` : "○ Bogen nicht bereit · Aktionen pausiert"}</p>`;
-    if (!snapshot) {
+    body.innerHTML = `<p class="ss-status">${esc(connectionText())}</p>`;
+    const freeContext = selected?.action.kind === "free" || result?.action.kind === "free" || [...checks.values()].some(check => check.kind === "free");
+    if (!snapshot && !freeContext) {
       body.insertAdjacentHTML(
         "beforeend",
         "<p>Öffne deinen Bogen, bestätige die Verbindung und wähle dort deine Foundry-Favoriten.</p><button data-open>Bogen öffnen</button>",
@@ -89,8 +98,11 @@ export function createPanel({
         "beforeend",
         '<p role="status">Aktion gesendet. Bei fehlender Bestätigung zuerst den Chat prüfen.</p><button data-status>Status prüfen · keine Wiederholung</button><button data-reset>Chat geprüft · abschließen</button>',
       );
-      body.querySelector("[data-status]").onclick = () => status(pending.id);
+      body.querySelector("[data-status]").onclick = () => status(pending.id, pending.local);
       body.querySelector("[data-reset]").onclick = () => {
+        // The player explicitly checked the chat; do not offer uncertain damage twice.
+        if (pending.attackId) hits.delete(pending.attackId);
+        if (pending.checkId) completedChecks.add(pending.checkId);
         pending = null;
         selected = null;
         error = "";
@@ -98,29 +110,38 @@ export function createPanel({
       };
       return;
     }
-    if (result) {
+    if (result && !hits.has(result.id)) {
       body.insertAdjacentHTML(
         "beforeend",
-        `<div class="ss-result" role="status"><strong>${esc(result.text)}</strong><small>Im öffentlichen Foundry-Chat</small></div>`,
+        `<div class="ss-result" role="status"><small>${esc(result.action.label)}</small><strong>${esc(result.text)}</strong><small>Im öffentlichen Foundry-Chat</small></div>`,
       );
-      if (
-        result.action?.kind === "weapon" &&
-        result.stage === "attack" &&
-        result.hit
-      ) {
-        const button = document.createElement("button");
-        button.textContent = "Treffer bestätigt · Schaden";
-        button.disabled = !fresh();
-        button.onclick = () => prepare(result.action.id, "damage");
-        body.append(button);
-      }
+    }
+    for (const [id, hit] of hits) {
+      const card = document.createElement("div");
+      card.className = "ss-result";
+      card.innerHTML = `<small>${esc(hit.action.label)} · Treffer &lt; ${hit.action.target}</small><strong>${esc(hit.text)}</strong><small>Verteidigung mit dem GM klären</small>`;
+      const damage = document.createElement("button");
+      damage.textContent = "Treffer bestätigt · Schaden";
+      damage.disabled = !fresh() || !snapshot.actions.some((a) => a.id === hit.action.id && a.kind === "weapon");
+      damage.onclick = () => prepare(hit.action.id, "damage", "", id);
+      const discard = document.createElement("button");
+      discard.textContent = "Treffer verwerfen";
+      discard.onclick = () => {
+        hits.delete(id);
+        if (selected?.attackId === id) selected = null;
+        if (result?.id === id) result = null;
+        render();
+      };
+      card.append(damage, discard);
+      body.append(card);
     }
     for (const [id, check] of checks) {
       if (check.expires < Date.now()) {
         checks.delete(id);
         continue;
       }
-      const matches =
+      const keyed = check.talentKey ? snapshot?.actions.filter(a => a.kind === "talent" && a.talentKey === check.talentKey) || [] : [];
+      const matches = check.kind === "free" ? [] : keyed.length ? keyed :
         snapshot?.actions.filter(
           (a) =>
             a.kind === "talent" &&
@@ -130,11 +151,15 @@ export function createPanel({
       const action = matches.length === 1 ? matches[0] : null;
       const button = document.createElement("button");
       button.className = "ss-check";
-      button.textContent = `${check.gm}: ${check.talent} + ${check.attribute}${action ? "" : " · Talent nicht gefunden"}`;
-      button.disabled = !fresh() || !action;
+      button.textContent = check.kind === "free" ? `${check.gm}: ${check.label} · ${check.formula}` : `${check.gm}: ${check.talent} + ${check.attribute}${action ? "" : " · Talent nicht gefunden"}`;
+      button.disabled = check.kind === "free" ? !canRollFree() : !fresh() || !action;
       button.onclick = () => {
-        checks.delete(id);
-        prepare(action.id, "talent", check.attribute);
+        if (check.kind === "free") {
+          selected = { action: { id, kind: "free", label: check.label, formula: check.formula }, stage: "free", checkId: id };
+          error = ""; render();
+        } else {
+          prepare(action.id, "talent", check.attribute, undefined, id);
+        }
       };
       body.append(button);
     }
@@ -156,7 +181,9 @@ export function createPanel({
           ? `+${action.score}`
           : action.kind === "weapon"
             ? `Treffer < ${action.target ?? "—"}`
-            : `${action.cost || "—"} ${action.resource || "Kosten konfigurieren"}`;
+            : action.cost > 0
+              ? `${action.cost} ${action.resource}`
+              : "Ohne Ressourcenkosten";
       button.innerHTML = `<span>${esc(action.label)}</span><small>${esc(detail)}</small>`;
       button.disabled = !fresh();
       button.onclick = () =>
@@ -164,11 +191,12 @@ export function createPanel({
       body.append(button);
     }
   }
-  function prepare(id, stage, attribute = "") {
+  function prepare(id, stage, attribute = "", attackId, checkId) {
     if (!fresh()) return;
     const action = snapshot.actions.find((a) => a.id === id);
     if (!action) return;
-    selected = { action, stage, attribute, snapshotId: snapshot.id };
+    if (stage === "damage" && !hits.has(attackId)) return;
+    selected = { action, stage, attribute, snapshotId: snapshot.id, attackId, checkId };
     error = "";
     render();
   }
@@ -177,8 +205,10 @@ export function createPanel({
     const form = document.createElement("form");
     form.className = "ss-form";
     form.innerHTML = `<h3>${esc(action.label)}</h3>`;
-    let allowed = fresh();
-    if (action.kind === "talent") {
+    let allowed = action.kind === "free" ? canRollFree() && checks.get(selected.checkId)?.expires >= Date.now() : fresh();
+    if (action.kind === "free") {
+      form.insertAdjacentHTML("beforeend", `<p>${esc(action.formula)}</p><small>Vom GM angefordert · ohne Talent- oder Attributwerte · öffentlich im Foundry-Chat</small>`);
+    } else if (action.kind === "talent") {
       form.insertAdjacentHTML(
         "beforeend",
         `<label>Attribut<select name="attribute" required><option value="">Bitte wählen</option>${snapshot.attributes.map((a) => `<option value="${a.key}" ${a.key === selected.attribute ? "selected" : ""}>${a.key} (${a.modifier >= 0 ? "+" : ""}${a.modifier})</option>`).join("")}</select></label><label>Bonus / Malus<input name="bonus" type="number" step="1" min="-10000" max="10000" value="0" required></label><p>1d20 + Talent ${action.score} + Attribut + Bonus</p>`,
@@ -193,18 +223,15 @@ export function createPanel({
         `<p>${stage === "attack" ? `1d100 &lt; ${action.target ?? "—"}<br>Gleichstand trifft nicht.` : `${esc(action.dice || "Schadenswürfel im Bogen konfigurieren")} + Angriffskraft ${action.power ?? "—"}<br>Nur nach bestätigtem Treffer würfeln.`}</p>`,
       );
     } else {
-      allowed &&=
-        Number.isInteger(action.cost) &&
-        action.cost > 0 &&
-        action.current >= action.cost;
+      allowed &&= !(action.cost > 0) || action.current >= action.cost;
       form.insertAdjacentHTML(
         "beforeend",
-        `<p class="ss-description">${esc(action.description || "")}</p><p>${action.cost || "—"} ${esc(action.resource || "Ressource konfigurieren")} · ${action.current ?? "—"} → ${(action.current ?? 0) - (action.cost || 0)}</p><p>Kosten werden gespeichert, danach erscheint die Karte im öffentlichen Chat.</p>`,
+        `<p class="ss-description">${esc(action.description || "")}</p>${action.cost > 0 ? `<p>${action.cost} ${esc(action.resource)} · ${action.current ?? "—"} → ${(action.current ?? 0) - action.cost}</p><p>Kosten werden gespeichert, danach erscheint die Karte im öffentlichen Chat.</p>` : "<p>Ohne Ressourcenkosten · Fähigkeit im öffentlichen Chat anzeigen.</p>"}`,
       );
     }
     form.insertAdjacentHTML(
       "beforeend",
-      `<button type="submit" ${allowed ? "" : "disabled"}>${action.kind === "ability" ? "Wirken & Kosten speichern" : "Öffentlich würfeln"}</button><button type="button" data-back>Zurück</button>`,
+      `<button type="submit" ${allowed ? "" : "disabled"}>${action.kind === "ability" ? (action.cost > 0 ? "Wirken & Kosten speichern" : "Wirken") : "Öffentlich würfeln"}</button><button type="button" data-back>Zurück</button>`,
     );
     form.querySelector("[data-back]").onclick = () => {
       selected = null;
@@ -212,14 +239,21 @@ export function createPanel({
     };
     form.onsubmit = (event) => {
       event.preventDefault();
-      if (!fresh() || selected.snapshotId !== snapshot.id || !allowed) {
-        error = "Werte geändert. Bitte Aktion erneut öffnen.";
+      if (!allowed || (action.kind === "free" ? !canRollFree() || checks.get(selected.checkId)?.expires < Date.now() : !fresh() || selected.snapshotId !== snapshot.id)) {
+        error = action.kind === "free" ? "Anforderung abgelaufen oder Foundry offline. Bitte den GM erneut anfordern lassen." : "Werte geändert. Bitte Aktion erneut öffnen.";
         selected = null;
         render();
         return;
       }
       const data = new FormData(form);
-      pending = { id: randomId(), action, stage };
+      pending = { id: action.kind === "free" ? selected.checkId : randomId(), action, stage, attackId: selected.attackId, checkId: selected.checkId, local: action.kind === "free" };
+      if (selected.checkId) checks.delete(selected.checkId);
+      if (action.kind === "free") {
+        const request = { id: pending.id, kind: "free", character: fresh() ? snapshot.character : game.user.name, talent: action.label, formula: action.formula };
+        render();
+        void rollFree(request);
+        return;
+      }
       invoke({
         id: pending.id,
         actionId: action.id,
@@ -236,42 +270,8 @@ export function createPanel({
     if (!game.user.isGM || !root) return;
     gmEditing = true;
     const body = root.querySelector(".ss-body");
-    body.innerHTML = `<form class="ss-form"><h3>Probe anfordern</h3><label>Talent<input name="talent" maxlength="120" placeholder="z. B. Wahrnehmung" required></label><label>Attribut<select name="attribute">${ATTRIBUTES.map((a) => `<option>${a}</option>`).join("")}</select></label><fieldset><legend>Spieler</legend>${game.users
-      .filter((u) => u.active && !u.isGM)
-      .map(
-        (u) =>
-          `<label class="ss-player"><input type="checkbox" name="target" value="${esc(u.id)}" checked><span>${esc(u.name)}</span></label>`,
-      )
-      .join(
-        "",
-      )}</fieldset><p>Die Spieler bestätigen selbst. Ergebnisse sind öffentlich.</p><button type="submit">Anfordern</button><button type="button" data-back>Zurück</button></form>`;
-    body.querySelector("[data-back]").onclick = () => {
-      gmEditing = false;
-      render();
-    };
-    body.querySelector("form").onsubmit = async (event) => {
-      event.preventDefault();
-      const form = event.currentTarget;
-      const data = new FormData(form);
-      if (!data.getAll("target").length) return;
-      form.querySelector("[type=submit]").disabled = true;
-      try {
-        await requestCheck({
-          id: randomId(),
-          talent: String(data.get("talent")).trim(),
-          attribute: data.get("attribute"),
-          targets: data.getAll("target"),
-          expires: Date.now() + 120000,
-        });
-        error = "";
-        gmEditing = false;
-        render();
-      } catch {
-        error = "Anforderung nicht bestätigt. Bitte Foundry-Chat prüfen.";
-        gmEditing = false;
-        render();
-      }
-    };
+    requestForm({ body, talents: snapshot?.actions.filter(a => a.kind === "talent") || [], onRequest: requestCheck,
+      onBack: () => { gmEditing = false; render(); } });
   }
   return {
     show,
@@ -282,7 +282,7 @@ export function createPanel({
       snapshot = value;
       seen = Date.now();
       if (changed) {
-        if (selected && selected.snapshotId !== value.id) {
+        if (selected && selected.action.kind !== "free" && selected.snapshotId !== value.id) {
           selected = null;
           error = "Charakterwerte aktualisiert. Bitte Aktion erneut wählen.";
         }
@@ -294,9 +294,7 @@ export function createPanel({
       if (lastReady !== Boolean(fresh())) render();
       const status = root.querySelector(".ss-status");
       if (status)
-        status.textContent = fresh()
-          ? `● ${snapshot.character} · verbunden`
-          : "○ Bogen nicht bereit · Aktionen pausiert";
+        status.textContent = connectionText();
     },
     clear() {
       snapshot = undefined;
@@ -304,10 +302,12 @@ export function createPanel({
       selected = null;
       pending = null;
       result = null;
+      hits.clear();
       error = "";
       render();
     },
     check(check) {
+      if (completedChecks.has(check.id) || pending?.checkId === check.id) return;
       checks.set(check.id, check);
       show();
     },
@@ -329,6 +329,9 @@ export function createPanel({
             ? `${pending.action.label} gewirkt`
             : `${r.total}${pending.stage === "attack" ? (hit ? " · Trefferprobe gelungen" : " · Verfehlt") : ""}`,
       };
+      if (hit) hits.set(result.id, result);
+      if (pending.stage === "damage") hits.delete(pending.attackId);
+      if (pending.checkId) completedChecks.add(pending.checkId);
       pending = null;
       selected = null;
       error = "";

@@ -1,12 +1,12 @@
 # Sheetshift Bridge
 
-Play from the Foundry map with your Sheetshift character: a movable favourites panel, talent rolls, weapon attacks and confirmed damage, resource-backed ability cards, and GM-requested checks.
+Play from the Foundry map with your Sheetshift character: a movable favourites panel, talent rolls, weapon attacks and confirmed damage, ability cards with optional resource costs, and GM-requested checks.
 
-Version **0.2.1** targets **Foundry VTT 14** and requires the matching Sheetshift update. The original talent bridge has been used on v14 build 360. New play actions were tested through an isolated browser simulator and automated tests; verify them together in your actual world before your next session.
+Version **0.3.0** targets **Foundry VTT 14** and requires the matching Sheetshift update. The original talent bridge has been used on v14 build 360. New play actions were tested through an isolated browser simulator and automated tests; verify them together in your actual world before your next session.
 
 ## Updating an existing installation
 
-In Foundry **Setup → Add-on Modules**, check for updates and update **Sheetshift Bridge** to **0.2.1**. Launch the same world, reload everyone's Foundry browser, and reconnect using **Sheetshift öffnen**. The manifest and Sheetshift URL stay the same. No server filesystem access, new domain, port, or Pangolin changes are required.
+In Foundry **Setup → Add-on Modules**, check for updates and update **Sheetshift Bridge** to **0.3.0**. Launch the same world, reload everyone's Foundry browser, and reconnect using **Sheetshift öffnen**. The manifest and Sheetshift URL stay the same. No server filesystem access, new domain, port, or Pangolin changes are required.
 
 ## Install from Foundry's web interface
 
@@ -55,9 +55,10 @@ GitHub hosts the module code and download only. Character data and roll messages
 - All bridge rolls are **public**, even if Foundry's chat roll selector is set to a private mode.
 - In Sheetshift, open **Foundry-Aktionen** to star favourite talents/weapons and configure weapon damage dice and ability resource/cost. Ability favourites reuse the existing stars.
 - Back on the map, **Sheetshift-Aktionen** shows those saved values. Drag its heading to move it; collapse it with the minus button. Actions pause when the sheet is stale or disconnected.
-- Attacks roll **1d100 strictly below the weapon Hit value**. Equality misses. After the GM confirms the hit, choose **Treffer bestätigt · Schaden**. Damage is **weapon dice + Angriffskraft**, without KK. Defence, criticals, damage application, and rests remain manual.
-- Ability use previews the effect and resource cost. Confirmation saves the debit in Sheetshift first, then posts a public card. Retrying the same pending operation never spends twice. If confirmation is lost, use **Foundry-Aktionen → Dieselbe Aktion fortsetzen** in the sheet; check the resource and chat before explicitly closing an uncertain action.
-- GMs open **Sheetshift-Aktionen → Probe anfordern**, type the exact talent name, choose an attribute and players, then send. Each connected player gets a two-minute prompt using their own values and confirms the public roll. Ambiguous talent names are not guessed.
+- Attacks roll **1d100 strictly below the weapon Hit value**. Equality misses. Each successful attack keeps its own damage button, so two weapons can both roll before damage. After the GM confirms each hit, choose its **Treffer bestätigt · Schaden**, or **Treffer verwerfen** if defended. Damage is **weapon dice + Angriffskraft**, without KK. Defence, criticals, damage application, and rests remain manual.
+- Ability costs are optional: no resource, blank costs, or `0` lets **Wirken** post a public card without spending. For positive costs with a resource, ability use previews the effect and resource cost. Confirmation saves the debit in Sheetshift first, then posts a public card. Retrying the same pending operation never spends twice. If confirmation is lost, use **Foundry-Aktionen → Dieselbe Aktion fortsetzen** in the sheet; check the resource and chat before explicitly closing an uncertain action.
+- GMs open **Sheetshift-Aktionen → Probe anfordern → Talentprobe**, search by talent name or group, choose an attribute and players, then send. Each connected player confirms a public roll using their own values. Catalogue selections distinguish duplicate talent names; manually typed ambiguous names are not guessed.
+- **Freier Wurf** lets the GM enter a label and formula (`1d100`, `2d6 + 3`, `1d20 - 2`) for selected players. Players preview and confirm directly in Foundry; no connected Sheetshift tab is needed. Requests expire after two minutes. Formulas allow dice and whole-number additions/subtractions, with at most 20 dice, 10 terms, 1000 sides per die and modifiers up to 10000. Scripts and data references are rejected.
 - No hidden/GM dice mode, automatic critical rule, or automatic target damage is added.
 - After reloading Foundry, open Sheetshift from Foundry again and approve the new connection. Independently opened tabs cannot pair.
 - If a roll times out, check chat before trying another roll. **Status prüfen · kein neuer Wurf** checks the original receipt without rolling again.
@@ -70,10 +71,10 @@ Requires Node.js 22+ and Python 3. No npm dependencies are needed.
 
 ```sh
 node --test tests/*.test.mjs
-python3 scripts/package.py --tag v0.2.1
+python3 scripts/package.py --tag v0.3.0
 ```
 
-The package contains only `module.json`, `bridge.mjs`, `receiver.mjs`, `protocol.mjs`, `actions.mjs`, `panel.mjs`, and `bridge.css`, under `sheetshift-bridge/`. Tests cover the receiver and the Foundry adapter, including duplicate requests and public chat attribution.
+The package contains only `module.json`, `bridge.mjs`, `receiver.mjs`, `protocol.mjs`, `actions.mjs`, `panel.mjs`, `bridge.css`, `gm-requests.mjs`, and `talents.mjs`, under `sheetshift-bridge/`. Tests cover the receiver and the Foundry adapter, including duplicate requests and public chat attribution.
 
 To release, update the manifest version and its versioned download URL, update release notes, commit, and push a matching `v<version>` tag. GitHub Actions runs tests, builds the ZIP, and publishes a preview release. Keep the manifest on `main` aligned with a published release before asking users to update.
 

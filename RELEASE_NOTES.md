@@ -1,9 +1,11 @@
-Sheetshift Bridge 0.2.1 — checkbox alignment fix
+Sheetshift Bridge 0.3.0 — smoother combat and GM requests
 
-- Align player checkboxes and names in the GM “Probe anfordern” form.
-- Keep text-field padding and borders away from Foundry checkbox icons.
-- Keep long player names readable without squeezing the checkbox.
+- Keep each successful weapon attack available for its own confirmed damage roll, including two weapons with the same name. Discard defended hits explicitly.
+- Cast abilities without resource costs: leave costs blank, use 0, or choose no resource. The ability appears in public chat without spending. Paid abilities still save the resource debit first.
+- Search the GM talent catalogue by name or group, with keyboard selection and player-specific values. Catalogue selections distinguish same-name talent rows.
+- Request labelled free dice rolls such as 1d100 or 2d6 + 3 from selected players. Players preview and confirm directly in Foundry, even without a connected Sheetshift tab.
+- Preserve GM authentication, selected recipients, two-minute expiry, public player attribution, bounded dice formulas and persistent duplicate protection.
 
-Compatible with the existing Sheetshift deployment for bridge 0.2.0. Update Sheetshift Bridge in Foundry Setup → Add-on Modules, then relaunch the world and reload player tabs. Reconnect through Sheetshift öffnen as usual. The manifest URL and connection settings stay the same.
+Deploy the matching Sheetshift update first. In Foundry Setup → Add-on Modules update Sheetshift Bridge to 0.3.0, relaunch the world and reload all player tabs. Reconnect sheets through Sheetshift öffnen. The manifest URL and connection settings stay the same.
 
-Verified checkbox alignment, label clicks, and keyboard selection in the local browser preview; module tests and release packaging passed.
+Verified with automated vault/bridge/spending tests, a local browser simulator and release ZIP validation. The new flows should also be checked in your actual Foundry v14 world before your next session.

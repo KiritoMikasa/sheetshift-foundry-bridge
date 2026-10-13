@@ -145,3 +145,31 @@
 .sheetshift-play.ss-collapsed {
   width: 180px;
 }
+.sheetshift-play [hidden] {
+  display: none;
+}
+.sheetshift-play .ss-modes {
+  display: flex;
+  gap: 6px;
+}
+.sheetshift-play button[aria-pressed="true"],
+.sheetshift-play button[aria-selected="true"] {
+  background: #c3a36c22;
+  border-color: #c3a36c;
+}
+.sheetshift-play .ss-suggestions {
+  max-height: 180px;
+  overflow: auto;
+  padding: 4px;
+  border: 1px solid #ffffff25;
+  border-radius: 7px;
+  background: #10121a;
+}
+.sheetshift-play .ss-suggestions button {
+  text-align: left;
+  margin: 2px 0;
+}
+.sheetshift-play .ss-suggestions span,
+.sheetshift-play .ss-suggestions small {
+  display: block;
+}
