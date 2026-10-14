@@ -31,6 +31,7 @@ import {
   playAnimation,
 } from "../animations.mjs";
 import { createPrivateStatus } from "../private-status.mjs";
+import { ANIMATION_PRESETS } from "../animation-presets.mjs";
 import {
   statusKeyPair,
   sealStatus,
@@ -363,6 +364,60 @@ test("animations accept fixed installed presets and stay optional", async () => 
     profile: { ...defaultProfile("ability"), animation: "heal" },
     map: { source: "Scene.scene.Token.token", targets: [] },
   });
+});
+
+test("animation presets place projectiles, bursts, ground effects and self effects without moving tokens", async () => {
+  const f = fixture();
+  const [source, target] = canvas.tokens.placeables;
+  // Only a fake installed database and Sequencer effect surface: document movement is forbidden.
+  let moved = 0;
+  source.document.update = async () => { moved++; };
+  const effects = [];
+  let plays = 0;
+  game.modules = new Map([["sequencer", { active: true }], ["JB2A_DnD5e", { active: true }]]);
+  globalThis.Sequencer = { Database: {
+    entryExists: () => true,
+    getPathsUnder: prefix => [`${prefix}.blue`],
+  } };
+  globalThis.Sequence = class {
+    effect() {
+      const calls = {};
+      effects.push(calls);
+      const effect = new Proxy({}, { get(_target, method) { return (...args) => { calls[method] = args; return effect; }; } });
+      return effect;
+    }
+    async play() { plays++; }
+  };
+  const context = { source: source.document.uuid, targets: [{ uuid: target.document.uuid, label: "Enemy" }] };
+  const run = async animation => {
+    effects.length = 0;
+    await playAnimation({ kind: "ability", profile: { ...defaultProfile("ability"), animation }, map: context });
+    return effects[0];
+  };
+  try {
+    const missile = await run("missile");
+    assert.deepEqual(missile.atLocation, [source]);
+    assert.deepEqual(missile.stretchTo, [target]);
+    const explosion = await run("fireball");
+    assert.deepEqual(explosion.atLocation, [target]);
+    assert.equal(explosion.stretchTo, undefined, "explosions must not stretch like projectiles");
+    const circle = await run("circle");
+    assert.deepEqual(circle.belowTokens, []);
+    const mist = await run("mist");
+    assert.deepEqual(mist.atLocation, [source], "self effects ignore marked enemies");
+    assert.equal(mist.stretchTo, undefined);
+    assert.equal(moved, 0);
+    await playAnimation({ kind: "attack", profile: { ...defaultProfile("weapon"), animation: "arrow" }, map: context });
+    assert.equal(plays, 4, "attack checks do not announce unconfirmed damage effects");
+    globalThis.Sequencer.Database.entryExists = () => false;
+    await run("ice");
+    assert.equal(plays, 4, "missing assets are optional and do not play an invalid file");
+    assert.equal(animationAsset("https://example.test/macro", globalThis.Sequencer.Database), null);
+    assert.equal(Object.keys(ANIMATION_PRESETS).length - 1, 29);
+  } finally {
+    delete globalThis.Sequence;
+    delete globalThis.Sequencer;
+  }
 });
 
 test("status encryption needs the GM private key and authenticates the whole context", () => {

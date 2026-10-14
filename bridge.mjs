@@ -154,6 +154,7 @@ export function openSheet() {
           "play-actions-v1",
           "resource-free-abilities-v1",
           "tabletop-v1",
+          "animation-presets-v2",
         ],
         player: game.user.name,
         world: game.world.title,

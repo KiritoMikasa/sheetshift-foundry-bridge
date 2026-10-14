@@ -1,6 +1,6 @@
-# Foundry tabletop companion (0.4.2)
+# Foundry tabletop companion (0.5.0)
 
-Sheetshift Bridge 0.4.2 includes the tabletop companion. Deploy the matching Sheetshift update before updating the module in Foundry.
+Sheetshift Bridge 0.5.0 includes the tabletop companion. Deploy the matching Sheetshift update before updating the module in Foundry.
 
 The companion targets Foundry v14 with owned actors/tokens, including Simple World-Building. Sheetshift remains the source of truth. Existing talent, d100 attack, confirmed damage, free abilities and GM free-roll requests remain available without token linking or animation add-ons.
 
@@ -11,11 +11,11 @@ Attack checks use **1d100 ≤ weapon Hit**: a roll of 60 hits a 60% weapon. This
 ## Set it up
 
 1. Deploy the matching Sheetshift update.
-2. Between sessions, in Foundry **Setup → Add-on Modules**, update **Sheetshift Bridge** to **0.4.2**. Relaunch the existing world and reload everyone's browser. The existing manifest URL and Sheetshift address stay the same; no new port, domain or Pangolin exception is needed.
+2. Between sessions, in Foundry **Setup → Add-on Modules**, update **Sheetshift Bridge** to **0.5.0**. Relaunch the existing world and reload everyone's browser. The existing manifest URL and Sheetshift address stay the same; no new port, domain or Pangolin exception is needed.
 3. The GM joins once in their usual browser. The module automatically creates a local status-decryption key and publishes its public key to the GM's Foundry user. Keep browser storage enabled. Use one browser/profile per GM user during this first version; changing browser/profile publishes a new public key, and connected players refresh their encrypted status within about 15 seconds. Clearing storage loses the old decryption key, but fresh updates restore the current view.
 4. Each player joins as their own Foundry user, clicks **Sheetshift öffnen**, signs in and accepts the connection.
 5. In **Sheetshift-Aktionen → Actor verknüpfen**, choose the Foundry actor you own and confirm. The bridge refuses NPCs you do not own and actors linked to another sheet/user. Select exactly one token belonging to that actor on the map for targeted actions. To switch actors, first explicitly unlink the existing one.
-6. In Sheetshift **Foundry-Aktionen**, star favourite weapons, abilities and talents. Under each weapon/ability's **Kartenaktion & Animation**, choose its icon, optional animation, target mode, range and area size. Leave animation/area/target off to keep ordinary actions simple.
+6. In Sheetshift **Foundry-Aktionen**, star favourite weapons, abilities and talents. Use **Bearbeiten** on a weapon or ability to open that entry in the character editor. Ability resource/cost and weapon damage dice live there, together with **Foundry · Ziel, Reichweite & Animation**. Search the 29 animation presets, select a group, choose target/range/area and save the character. The popup remains a compact action selector. Existing saved settings retain their keys.
 7. Optional: in **Token-Status & Freigabe**, enable **HP, Ressourcen und Zustände nur mit dem GM teilen**. Sharing starts off. Your own HUD and token status work without sharing. The GM opens **Gruppe & Proben** to see voluntary shares and requested-roll progress.
 
 ## Playing from the map
@@ -34,7 +34,7 @@ Attack checks use **1d100 ≤ weapon Hit**: a roll of 60 hits a 60% weapon. This
 
 The GM can install these through Foundry's normal module installer and enable them in the existing world. The bridge never installs modules itself.
 
-- [Sequencer](https://foundryvtt.com/packages/sequencer/) plus [JB2A Free](https://foundryvtt.com/packages/JB2A_DnD5e/) enable the curated shadow, healing, shield, fire, lightning and melee presets. The free asset collection is a substantial download; no paid pack is required, although availability varies by installed assets. The bridge chooses installed matching files only; no arbitrary scripts, paths or remote asset URLs are accepted. An unavailable preset is skipped. Colours prefer matching assets where available. Audio is off by default and only uses audio embedded in the chosen animation, respecting Foundry volume controls.
+- [Sequencer](https://foundryvtt.com/packages/sequencer/) plus [JB2A Free](https://foundryvtt.com/packages/JB2A_DnD5e/) enable 29 curated presets across elements, arcane magic, support, shadow/nature and combat. These include magic missiles, frost and acid rays, fire explosions, lightning strikes, circles, portals, mist and lightning step effects, blessing, curses, arrows and unarmed attacks. The free asset collection is a substantial download; no paid pack is required, although availability varies by installed assets. The bridge chooses installed matching files only; no arbitrary scripts, paths or remote asset URLs are accepted. An unavailable preset is skipped. Teleport-style effects are cosmetic and never move a token. Projectiles stretch from source to target; bursts stay on the target, circles appear beneath tokens and step effects stay on the source. New presets require bridge 0.5.0; older bridges retain their action snapshots but a new preset cannot consume resource costs until the bridge is updated. Colours prefer matching assets where available. Audio is off by default and only uses audio embedded in the chosen animation, respecting Foundry volume controls.
 - [Dice So Nice](https://foundryvtt.com/packages/dice-so-nice/) supplies animated 3D dice through the existing native roll flow. Configure its appearance directly in Foundry.
 - [FXMaster](https://foundryvtt.com/packages/fxmaster/) supplies GM-controlled scene ambience. Configure weather/effects directly in Foundry; the companion only reports its availability.
 

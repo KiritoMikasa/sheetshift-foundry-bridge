@@ -1,3 +1,14 @@
+Sheetshift Bridge 0.5.0 — expanded animation library
+
+- Add 29 curated animation choices using installed JB2A assets, including projectiles, bursts, circles and cosmetic teleport-style effects.
+- Distinguish target bursts from source-to-target projectiles and source-only step effects; never move tokens or apply gameplay effects.
+- Advertise expanded preset support so Sheetshift can stop unsupported casts before resource spending.
+- Matching Sheetshift changes move customisation into the character editor and keep the Foundry action selector compact.
+
+Deploy the matching Sheetshift update, update Foundry through Setup → Add-on Modules to bridge 0.5.0 and reload/reconnect. No new domain, port or Pangolin exception is needed.
+
+---
+
 Sheetshift Bridge 0.4.2 — show every token resource
 
 - Show HP and every selected resource beneath linked tokens.

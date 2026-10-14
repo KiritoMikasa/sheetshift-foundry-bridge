@@ -1,4 +1,5 @@
 import { isText, isId } from "./protocol.mjs";
+import { ANIMATION_PRESETS } from "./animation-presets.mjs";
 export const ICONS = {
   sword: "fa-sword",
   wand: "fa-wand-magic-sparkles",
@@ -10,15 +11,7 @@ export const ICONS = {
   heart: "fa-heart",
   book: "fa-book-open",
 };
-export const ANIMATIONS = {
-  none: "Keine",
-  shadow: "Schatten",
-  heal: "Heilung",
-  shield: "Schild",
-  fire: "Feuer",
-  lightning: "Blitz",
-  slash: "Waffenhieb",
-};
+export const ANIMATIONS = Object.fromEntries(Object.entries(ANIMATION_PRESETS).map(([key, preset]) => [key, preset.label]));
 export const COLORS = {
   violet: "#b694f4",
   blue: "#7dbbf2",

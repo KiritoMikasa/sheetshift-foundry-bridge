@@ -1,13 +1,6 @@
 import { tokenByUuid } from "./map-actions.mjs";
+import { ANIMATION_PRESETS } from "./animation-presets.mjs";
 // Asset identifiers are fixed presets, resolved only from the installed JB2A database.
-const PRESETS = {
-  shadow: ["jb2a.darkness", "jb2a.dark_impact"],
-  heal: ["jb2a.healing_generic", "jb2a.healing_word"],
-  shield: ["jb2a.shield"],
-  fire: ["jb2a.fire_bolt", "jb2a.fireball"],
-  lightning: ["jb2a.chain_lightning", "jb2a.lightning_bolt"],
-  slash: ["jb2a.melee_generic.slash", "jb2a.slash"],
-};
 export function optionalModules() {
   return {
     sequencer: Boolean(
@@ -29,7 +22,7 @@ export function animationAsset(
   color,
 ) {
   if (!database) return null;
-  for (const prefix of PRESETS[preset] || []) {
+  for (const prefix of ANIMATION_PRESETS[preset]?.paths || []) {
     if (!database.entryExists(prefix)) continue;
     const paths = database.getPathsUnder(prefix, { fullyQualified: true });
     const candidates =
@@ -60,13 +53,15 @@ export async function playAnimation(request) {
     return;
   const modules = optionalModules();
   if (!modules.sequencer || !modules.jb2a) return;
+  const preset = ANIMATION_PRESETS[profile.animation];
+  if (!preset) return;
   const file = animationAsset(profile.animation, undefined, profile.color),
     source = tokenByUuid(request.map.source);
   if (!file || !source) return;
   const targets = request.map.targets
     .map((t) => tokenByUuid(t.uuid))
     .filter(Boolean);
-  const locations = request.map.area
+  const locations = preset.mode === "self" ? [source] : request.map.area
     ? [{ x: request.map.area.x, y: request.map.area.y }]
     : targets.length
       ? targets
@@ -82,13 +77,14 @@ export async function playAnimation(request) {
       .fadeOut(300)
       .volume(profile.sound ? 0.35 : 0);
     if (
-      ["fire", "lightning"].includes(profile.animation) &&
+      preset.mode === "projectile" &&
       target !== source &&
       !request.map.area
     )
       effect = effect.atLocation(source).stretchTo(target);
     else
-      effect = request.map.area ? effect.scale(1) : effect.scaleToObject(1.4);
+      effect = request.map.area && preset.mode !== "self" ? effect.scale(1) : effect.scaleToObject(1.4);
+    if (preset.mode === "ground") effect.belowTokens();
   }
   await sequence.play();
 }
