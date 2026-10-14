@@ -61,7 +61,7 @@ test('both same-name weapon hits remain available and damage resolves only its o
 test('a miss, repeated use of one weapon, and snapshot refreshes preserve earlier hits', () => {
   const f = fixture();
   f.roll(0, 20);
-  f.roll(1, 62); // Equality is a miss.
+  f.roll(1, 63); // Above the Hit value misses.
   assert.equal(f.buttons('Treffer bestätigt').length, 1);
   f.roll(0, 25);
   assert.equal(f.buttons('Treffer bestätigt').length, 2, 'each attack has its own damage option');
@@ -142,4 +142,14 @@ test('damage preserves each hit target even after the player changes their curre
   const f=fixture({tabletop});const first=f.roll(0,20);target=context('second');const second=f.roll(1,30);
   assert.equal(first.map.targets[0].label,'first');assert.equal(second.map.targets[0].label,'second');
   f.buttons('Treffer bestätigt')[0].onclick();assert.equal(f.submit().map.targets[0].label,'first');
+});
+
+test('rolling exactly the weapon Hit value keeps a confirmed-damage action', () => {
+  const f = fixture();
+  f.roll(0, 60);
+  assert.equal(f.buttons('Treffer bestätigt').length, 1, '60 hits a 60% weapon');
+  f.buttons('Treffer bestätigt')[0].onclick();
+  const damage = f.submit();
+  assert.equal(damage.actionId, 'weapon:0');
+  assert.equal(damage.stage, 'damage');
 });

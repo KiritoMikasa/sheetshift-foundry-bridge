@@ -1,12 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validActionRequest, actionFormula, validReceipt, validSnapshot, gmCheck } from '../actions.mjs';
+import { validActionRequest, attackHits, actionFormula, validReceipt, validSnapshot, gmCheck } from '../actions.mjs';
 const base = { id: 'a'.repeat(32), character: 'Hero', talent: 'Sense' };
 test('attack is d100 and damage adds only attack power; dice injection is rejected', () => {
   const attack = { ...base, kind: 'attack', target: 65 };
   assert.ok(validActionRequest(attack)); assert.equal(actionFormula(attack), '1d100');
   assert.ok(validReceipt(attack, { total: 65, die: 65, formula: '1d100', messageId: 'chat' }));
-  assert.equal(65 < attack.target, false, 'equality misses');
   const damage = { ...base, kind: 'damage', dice: '2d6', power: 7 };
   assert.equal(actionFormula(damage), '2d6 + 7');
   assert.ok(validReceipt(damage, { total: 15, die: 8, formula: '2d6 + 7', messageId: 'chat' }));
@@ -67,4 +66,14 @@ test('free formulas accept bounded dice and modifiers and reject executable synt
   assert.equal(gmCheck(message, gm, { id: 'other' }, 1), null);
   assert.equal(validCheckRequest({ ...check, formula: '@secret' }, 1), false);
   assert.equal(validCheckRequest({ ...check, targets: [] }, 1), false);
+});
+
+test('weapon hit thresholds are inclusive with valid d100 bounds', () => {
+  assert.equal(attackHits(59, 60), true);
+  assert.equal(attackHits(60, 60), true);
+  assert.equal(attackHits(61, 60), false);
+  assert.equal(attackHits(1, 0), false);
+  assert.equal(attackHits(100, 100), true);
+  for (const die of [0, 101, 60.5, NaN]) assert.equal(attackHits(die, 100), false);
+  assert.equal(attackHits(60, undefined), false);
 });

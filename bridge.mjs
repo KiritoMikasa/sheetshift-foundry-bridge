@@ -1,7 +1,7 @@
 import { CHANNEL, escapeHtml, randomId, sheetUrl } from "./protocol.mjs";
 import { createReceiver } from "./receiver.mjs";
 
-import { actionFormula, gmCheck, validCheckRequest } from "./actions.mjs";
+import { actionFormula, attackHits, gmCheck, validCheckRequest } from "./actions.mjs";
 import { createPanel } from "./panel.mjs";
 import { createTabletop } from "./tabletop.mjs";
 
@@ -73,7 +73,7 @@ async function executeRequest(request) {
       flavor:
         `${targets}<strong>${escapeHtml(request.character)} · ${escapeHtml(request.talent)}</strong><br>` +
         (request.kind === "attack"
-          ? `Treffer: 1d100 &lt; ${request.target} · ${roll.total < request.target ? "Probe gelungen — Verteidigung abwarten" : "Verfehlt"}`
+          ? `Treffer: 1d100 &le; ${request.target} · ${attackHits(roll.total, request.target) ? "Probe gelungen — Verteidigung abwarten" : "Verfehlt"}`
           : request.kind === "damage"
             ? "Bestätigter Treffer · Waffenschaden + Angriffskraft"
             : request.kind === "free"

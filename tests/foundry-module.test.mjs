@@ -14,10 +14,10 @@ test('module opens configured sheet and produces a native public Foundry chat ro
   globalThis.game = { ready: true, user: { id: 'player-1', name: 'Real player', active: true }, world: { id: 'world-1', title: 'Test world' }, socket: { connected: true },
     settings: { register: () => {}, get: () => 'https://sheet.example/vault' }, modules: new Map([['sheetshift-bridge', {}]]) };
   globalThis.ui = { notifications: { warn: message => assert.fail(message) } };
-  let formula, chatData, chatOptions, executed = 0;
+  let formula, chatData, chatOptions, executed = 0, total = 20, die = 13;
   globalThis.foundry = { dice: { Roll: class {
     constructor(value) { formula = value; }
-    async evaluate(options) { assert.equal(options.allowInteractive, false); executed++; this.total = 20; this.dice = [{ total: 13 }]; }
+    async evaluate(options) { assert.equal(options.allowInteractive, false); executed++; this.total = total; this.dice = [{ total: die }]; }
     async toMessage(data, options) { chatData = data; chatOptions = options; return { id: 'native-message' }; }
   } } };
   const cards = [];
@@ -52,6 +52,15 @@ test('module opens configured sheet and produces a native public Foundry chat ro
       assert.equal(card.content.includes('verbraucht'), cost > 0);
       if (!cost) assert.ok(card.content.includes('Gewirkt'));
       assert.equal(messages.at(-1).message.result.messageId, 'ability-card');
+    }
+    for (const [index, rolled] of [59, 60, 61].entries()) {
+      now += 1000; total = die = rolled;
+      request = { id: String(index + 4).repeat(32), character: 'Hero', talent: 'Sichel', kind: 'attack', target: 60 };
+      await listeners.get('message')(event('roll'));
+      assert.ok(chatData.flavor.includes('1d100 &le; 60'));
+      assert.equal(chatData.flavor.includes('Probe gelungen'), rolled <= 60);
+      assert.equal(chatData.flavor.includes('Verfehlt'), rolled > 60);
+      assert.equal(messages.at(-1).message.result.total, rolled);
     }
     openSheet();
     assert.equal(calls.length, 1, 'opening the bridge again must not navigate away from sheet drafts');

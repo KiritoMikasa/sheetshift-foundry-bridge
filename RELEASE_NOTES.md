@@ -1,3 +1,14 @@
+Sheetshift Bridge 0.4.1 — inclusive weapon hit checks
+
+- Attacks succeed when `1d100 ≤ weapon Hit`: rolling 60 hits a 60% weapon; 61 misses.
+- Keep the confirmed damage action for equal-value hits.
+- Align Foundry previews, chat labels and the Sheetshift result with the corrected rule.
+- Tested below, equal and above the threshold through native chat rolls and the action panel.
+
+Deploy the matching Sheetshift update, update the bridge to 0.4.1 and reconnect after reloading Foundry.
+
+---
+
 Sheetshift Bridge 0.4.0 — tabletop companion
 
 - Owned-actor linking and grouped action HUD with icons and saved HP/resources/effects.

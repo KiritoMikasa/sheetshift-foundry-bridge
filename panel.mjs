@@ -1,4 +1,4 @@
-import { validSnapshot, validDice } from "./actions.mjs";
+import { validSnapshot, validDice, attackHits } from "./actions.mjs";
 import { escapeHtml as esc, randomId } from "./protocol.mjs";
 import { requestForm } from "./gm-requests.mjs";
 
@@ -152,7 +152,7 @@ export function createPanel({
     for (const [id, hit] of hits) {
       const card = document.createElement("div");
       card.className = "ss-result";
-      card.innerHTML = `<small>${esc(hit.action.label)} · Treffer &lt; ${hit.action.target}</small><strong>${esc(hit.text)}</strong><small>Verteidigung mit dem GM klären</small>`;
+      card.innerHTML = `<small>${esc(hit.action.label)} · Treffer &le; ${hit.action.target}</small><strong>${esc(hit.text)}</strong><small>Verteidigung mit dem GM klären</small>`;
       const damage = document.createElement("button");
       damage.textContent = "Treffer bestätigt · Schaden";
       damage.disabled =
@@ -256,7 +256,7 @@ export function createPanel({
         action.kind === "talent"
           ? `+${action.score}`
           : action.kind === "weapon"
-            ? `Treffer < ${action.target ?? "—"}`
+            ? `Treffer ≤ ${action.target ?? "—"}`
             : action.cost > 0
               ? `${action.cost} ${action.resource}`
               : "Ohne Ressourcenkosten";
@@ -322,7 +322,7 @@ export function createPanel({
           : validDice(action.dice) && Number.isSafeInteger(action.power);
       form.insertAdjacentHTML(
         "beforeend",
-        `<p>${stage === "attack" ? `1d100 &lt; ${action.target ?? "—"}<br>Gleichstand trifft nicht.` : `${esc(action.dice || "Schadenswürfel im Bogen konfigurieren")} + Angriffskraft ${action.power ?? "—"}<br>Nur nach bestätigtem Treffer würfeln.`}</p>`,
+        `<p>${stage === "attack" ? `1d100 &le; ${action.target ?? "—"}<br>Gleichstand trifft.` : `${esc(action.dice || "Schadenswürfel im Bogen konfigurieren")} + Angriffskraft ${action.power ?? "—"}<br>Nur nach bestätigtem Treffer würfeln.`}</p>`,
       );
     } else {
       allowed &&= !(action.cost > 0) || action.current >= action.cost;
@@ -498,7 +498,7 @@ export function createPanel({
       }
       const r = data.result;
       if (!r) return;
-      const hit = pending.stage === "attack" && r.total < pending.action.target;
+      const hit = pending.stage === "attack" && attackHits(r.total, pending.action.target);
       result = {
         ...pending,
         hit,

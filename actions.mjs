@@ -91,6 +91,11 @@ export function validActionRequest(r) {
     (!(r.cost > 0) || isText(r.resource))
   );
 }
+// A weapon's Hit percentage includes its boundary: 60 hits on a roll of 60.
+export function attackHits(total, target) {
+  return Number.isSafeInteger(total) && total >= 1 && total <= 100 &&
+    isModifier(target) && target >= 0 && total <= target;
+}
 export function actionFormula(r) {
   if (r.kind === "free") return parseFreeFormula(r.formula)?.formula || "";
   if (r.kind === "attack") return "1d100";
