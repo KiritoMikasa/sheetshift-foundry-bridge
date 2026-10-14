@@ -1,15 +1,17 @@
-# Foundry tabletop companion (0.4.1)
+# Foundry tabletop companion (0.4.2)
 
-Sheetshift Bridge 0.4.1 includes the tabletop companion. Deploy the matching Sheetshift update before updating the module in Foundry.
+Sheetshift Bridge 0.4.2 includes the tabletop companion. Deploy the matching Sheetshift update before updating the module in Foundry.
 
 The companion targets Foundry v14 with owned actors/tokens, including Simple World-Building. Sheetshift remains the source of truth. Existing talent, d100 attack, confirmed damage, free abilities and GM free-roll requests remain available without token linking or animation add-ons.
+
+Token overlays show HP and every selected resource, including depleted resources. This requires Sheetshift Bridge **0.4.2**.
 
 Attack checks use **1d100 ≤ weapon Hit**: a roll of 60 hits a 60% weapon. This correction requires Sheetshift Bridge **0.4.1** and the matching Sheetshift update.
 
 ## Set it up
 
 1. Deploy the matching Sheetshift update.
-2. Between sessions, in Foundry **Setup → Add-on Modules**, update **Sheetshift Bridge** to **0.4.1**. Relaunch the existing world and reload everyone's browser. The existing manifest URL and Sheetshift address stay the same; no new port, domain or Pangolin exception is needed.
+2. Between sessions, in Foundry **Setup → Add-on Modules**, update **Sheetshift Bridge** to **0.4.2**. Relaunch the existing world and reload everyone's browser. The existing manifest URL and Sheetshift address stay the same; no new port, domain or Pangolin exception is needed.
 3. The GM joins once in their usual browser. The module automatically creates a local status-decryption key and publishes its public key to the GM's Foundry user. Keep browser storage enabled. Use one browser/profile per GM user during this first version; changing browser/profile publishes a new public key, and connected players refresh their encrypted status within about 15 seconds. Clearing storage loses the old decryption key, but fresh updates restore the current view.
 4. Each player joins as their own Foundry user, clicks **Sheetshift öffnen**, signs in and accepts the connection.
 5. In **Sheetshift-Aktionen → Actor verknüpfen**, choose the Foundry actor you own and confirm. The bridge refuses NPCs you do not own and actors linked to another sheet/user. Select exactly one token belonging to that actor on the map for targeted actions. To switch actors, first explicitly unlink the existing one.

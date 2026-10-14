@@ -192,7 +192,6 @@
 .ss-token-overlays {position:fixed;inset:0;pointer-events:none;z-index:40;overflow:hidden; }
 .ss-token-status {position:absolute;width:110px;transform:translateX(-50%);background:#151722de;border:1px solid #ffffff28;border-radius:6px;padding:4px 6px;color:#eee9df; }
 .ss-token-status .ss-conditions {max-height:28px;overflow:hidden; }
-.ss-token-status .ss-vital:nth-of-type(n+3) {display:none; }
 @keyframes ss-turn-glow {50%{text-shadow:0 0 12px #e2bf7c80;}}
 @media(prefers-reduced-motion:reduce){.sheetshift-play .ss-turn{animation:none}.ss-vital i{transition:none}}
 .sheetshift-play .ss-target-portrait {width:36px;height:36px;object-fit:cover;border:1px solid #ffffff30;border-radius:6px;margin:6px 4px 0 0; }

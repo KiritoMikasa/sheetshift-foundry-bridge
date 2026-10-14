@@ -2,7 +2,7 @@
   "id": "sheetshift-bridge",
   "title": "Sheetshift Bridge",
   "description": "Owned-token action HUD, target and area previews, optional ability animations, private GM status sharing, turn reminders, and tracked GM checks.",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "compatibility": {
     "minimum": "14",
     "maximum": "14"
@@ -17,7 +17,7 @@
   ],
   "url": "https://github.com/KiritoMikasa/sheetshift-foundry-bridge",
   "manifest": "https://raw.githubusercontent.com/KiritoMikasa/sheetshift-foundry-bridge/main/module.json",
-  "download": "https://github.com/KiritoMikasa/sheetshift-foundry-bridge/releases/download/v0.4.1/sheetshift-bridge.zip",
+  "download": "https://github.com/KiritoMikasa/sheetshift-foundry-bridge/releases/download/v0.4.2/sheetshift-bridge.zip",
   "styles": [
     "bridge.css"
   ]

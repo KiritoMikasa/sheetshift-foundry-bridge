@@ -1,3 +1,14 @@
+Sheetshift Bridge 0.4.2 — show every token resource
+
+- Show HP and every selected resource beneath linked tokens.
+- Remove the CSS rule that hid Astralenergie and other resources after the first.
+- Preserve existing private status sharing and resource values.
+- Verified the actual overlay markup and stylesheet in a browser with three resources, including a depleted resource; Foundry integration tests pass.
+
+Update Sheetshift Bridge to 0.4.2 through Setup → Add-on Modules, then reload Foundry. No new port, domain or Pangolin exception is needed.
+
+---
+
 Sheetshift Bridge 0.4.1 — inclusive weapon hit checks
 
 - Attacks succeed when `1d100 ≤ weapon Hit`: rolling 60 hits a 60% weapon; 61 misses.
