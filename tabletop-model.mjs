@@ -1,5 +1,5 @@
 import { isText, isId } from "./protocol.mjs";
-import { ANIMATION_PRESETS } from "./animation-presets.mjs";
+import { ANIMATION_PRESETS, TOKEN_EFFECT_PRESETS } from "./animation-presets.mjs";
 export const ICONS = {
   sword: "fa-sword",
   wand: "fa-wand-magic-sparkles",
@@ -41,6 +41,7 @@ export function validProfile(p) {
     p &&
       Object.hasOwn(ICONS, p.icon) &&
       Object.hasOwn(ANIMATIONS, p.animation) &&
+      (p.tokenEffect === undefined || Object.hasOwn(TOKEN_EFFECT_PRESETS, p.tokenEffect)) &&
       Object.hasOwn(COLORS, p.color) &&
       Object.hasOwn(TARGETS, p.target) &&
       Object.hasOwn(SHAPES, p.shape) &&

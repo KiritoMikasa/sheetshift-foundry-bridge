@@ -176,7 +176,13 @@
 .sheetshift-play .ss-tabletop { border-bottom:1px solid #ffffff20; padding-bottom:10px; margin-bottom:12px; }
 .sheetshift-play .ss-token-link strong,.sheetshift-play .ss-token-link small,.sheetshift-play .ss-party small,.sheetshift-play .ss-targets small,.sheetshift-play .ss-addons small { display:block; }
 .sheetshift-play .ss-token-link button { min-height:28px;font-size:11px; }
-.ss-vital small { display:flex;justify-content:space-between;gap:8px;color:#d5d0c9;font:11px/1.4 system-ui; }
+.ss-vital small { display:flex;align-items:baseline;justify-content:space-between;gap:8px;color:#d5d0c9;font:11px/1.4 system-ui; }
+.ss-vital-label {min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ss-vital b {flex:0 0 auto;white-space:nowrap;font-variant-numeric:tabular-nums;}
+.sheetshift-play .ss-hud-vitals {margin:8px 0;}
+.sheetshift-play .ss-hud-vitals summary {cursor:pointer;font-size:11px;color:#d5d0c9;margin-bottom:8px;}
+.sheetshift-play .ss-overlay-control {display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;color:#b9b7b0;}
+.sheetshift-play .ss-overlay-control select {width:auto;max-width:180px;min-height:28px;padding:3px 6px;font-size:11px;}
 .ss-vital > div {height:4px;background:#ffffff20;border-radius:4px;overflow:hidden;margin:3px 0 7px; }
 .ss-vital i {height:100%;display:block;background:#8dc9a1;transition:width .3s ease; }
 .ss-vital + .ss-vital i {background:#9cc3eb; }
@@ -190,7 +196,9 @@
 .sheetshift-play .ss-turn {color:#e2bf7c;font-weight:600;animation:ss-turn-glow 1.2s ease 2; }
 .sheetshift-play .ss-hint,.sheetshift-play .ss-addons {font-size:11px;color:#b9b7b0;margin:10px 0; }
 .ss-token-overlays {position:fixed;inset:0;pointer-events:none;z-index:40;overflow:hidden; }
-.ss-token-status {position:absolute;width:110px;transform:translateX(-50%);background:#151722de;border:1px solid #ffffff28;border-radius:6px;padding:4px 6px;color:#eee9df; }
+.ss-token-status {position:absolute;width:170px;box-sizing:border-box;transform:translateX(-50%);background:#151722de;border:1px solid #ffffff28;border-radius:6px;padding:4px 6px;color:#eee9df; }
+.ss-token-status-compact {width:max-content;max-width:220px;}
+.ss-token-compact {display:block;white-space:nowrap;font:11px/1.4 system-ui;}
 .ss-token-status .ss-conditions {max-height:28px;overflow:hidden; }
 @keyframes ss-turn-glow {50%{text-shadow:0 0 12px #e2bf7c80;}}
 @media(prefers-reduced-motion:reduce){.sheetshift-play .ss-turn{animation:none}.ss-vital i{transition:none}}

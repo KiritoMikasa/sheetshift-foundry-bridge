@@ -1,5 +1,5 @@
 import { tokenByUuid } from "./map-actions.mjs";
-import { ANIMATION_PRESETS } from "./animation-presets.mjs";
+import { ANIMATION_PRESETS, TOKEN_EFFECT_PRESETS } from "./animation-presets.mjs";
 // Asset identifiers are fixed presets, resolved only from the installed JB2A database.
 export function optionalModules() {
   return {
@@ -20,9 +20,10 @@ export function animationAsset(
   preset,
   database = globalThis.Sequencer?.Database,
   color,
+  presets = ANIMATION_PRESETS,
 ) {
   if (!database) return null;
-  for (const prefix of ANIMATION_PRESETS[preset]?.paths || []) {
+  for (const prefix of presets[preset]?.paths || []) {
     if (!database.entryExists(prefix)) continue;
     const paths = database.getPathsUnder(prefix, { fullyQualified: true });
     const candidates =
@@ -46,6 +47,7 @@ export async function playAnimation(request) {
   const profile = request.profile;
   if (
     !profile ||
+    request.mode?.active === false ||
     profile.animation === "none" ||
     !request.map ||
     request.kind === "attack"
@@ -88,3 +90,5 @@ export async function playAnimation(request) {
   }
   await sequence.play();
 }
+
+export const tokenEffectAsset = (preset, database, color) => animationAsset(preset, database, color, TOKEN_EFFECT_PRESETS);

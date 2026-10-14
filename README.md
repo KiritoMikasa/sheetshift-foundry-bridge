@@ -1,14 +1,16 @@
 # Sheetshift Bridge
 
-Version **0.5.0** adds 29 animation presets and supports the streamlined Sheetshift editor.
+Version **0.6.0** adds saved ability modes, 16 persistent token effects, 46 one-shot animations and collapsible status displays.
+
+The animation library offers searchable choices for elemental, arcane, healing and combat abilities.
 
 Play from the Foundry map with your Sheetshift character: a movable favourites panel, talent rolls, weapon attacks and confirmed damage, ability cards with optional resource costs, and GM-requested checks.
 
-Version **0.5.0** targets **Foundry VTT 14** and requires the matching Sheetshift update. The original talent bridge has been used on v14 build 360. New play actions were tested through an isolated browser simulator and automated tests; verify them together in your actual world before your next session.
+Version **0.6.0** targets **Foundry VTT 14** and requires the matching Sheetshift update. The original talent bridge has been used on v14 build 360. New play actions were tested through an isolated browser simulator and automated tests; verify them together in your actual world before your next session.
 
 ## Updating an existing installation
 
-In Foundry **Setup → Add-on Modules**, check for updates and update **Sheetshift Bridge** to **0.5.0**. Launch the same world, reload everyone's Foundry browser, and reconnect using **Sheetshift öffnen**. The manifest and Sheetshift URL stay the same. No server filesystem access, new domain, port, or Pangolin changes are required.
+In Foundry **Setup → Add-on Modules**, check for updates and update **Sheetshift Bridge** to **0.6.0**. Launch the same world, reload everyone's Foundry browser, and reconnect using **Sheetshift öffnen**. The manifest and Sheetshift URL stay the same. No server filesystem access, new domain, port, or Pangolin changes are required.
 
 ## Install from Foundry's web interface
 
@@ -75,7 +77,7 @@ Requires Node.js 22+ and Python 3. Runtime modules and the crypto bundle are inc
 
 ```sh
 node --test tests/*.test.mjs
-python3 scripts/package.py --tag v0.5.0
+python3 scripts/package.py --tag v0.6.0
 ```
 
 The package allowlist includes the core bridge, tabletop modules and crypto license notices under `sheetshift-bridge/`. It never includes developer dependencies, tests, keys or character files.

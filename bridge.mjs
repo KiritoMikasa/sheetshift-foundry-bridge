@@ -58,7 +58,7 @@ async function executeRequest(request) {
   if (request.kind === "ability") {
     const message = await foundry.documents.ChatMessage.create({
       speaker,
-      content: `${targets}<h3>${escapeHtml(request.character)} · ${escapeHtml(request.talent)}</h3><p>${escapeHtml(request.description).replace(/\n/g, "<br>")}</p>${request.cost > 0 ? `<p>${request.cost} ${escapeHtml(request.resource)} verbraucht · Sheetshift</p>` : "<p>Gewirkt · Sheetshift</p>"}`,
+      content: `${targets}<h3>${escapeHtml(request.character)} · ${escapeHtml(request.talent)}</h3><p>${escapeHtml(request.description).replace(/\n/g, "<br>")}</p>${request.mode ? `<p>${request.mode.active ? "Aktiviert" : "Deaktiviert"} · Sheetshift</p>` : ""}${request.cost > 0 ? `<p>${request.cost} ${escapeHtml(request.resource)} verbraucht · Sheetshift</p>` : "<p>Gewirkt · Sheetshift</p>"}`,
       flags,
     });
     if (!message?.id) throw new Error("Chat message was not created");
@@ -155,6 +155,8 @@ export function openSheet() {
           "resource-free-abilities-v1",
           "tabletop-v1",
           "animation-presets-v2",
+          "animation-presets-v3",
+          "ability-modes-v1",
         ],
         player: game.user.name,
         world: game.world.title,
@@ -174,6 +176,23 @@ export function openSheet() {
 }
 
 Hooks.once("init", () => {
+  game.settings.register(ID, "tokenOverlayMode", {
+    name: "Sheetshift Token-Anzeige",
+    hint: "HP und Ressourcen unter Tokens anzeigen. Gilt nur für diesen Browser und ändert keine GM-Freigabe.",
+    scope: "client",
+    config: true,
+    type: String,
+    choices: { full: "HP & Ressourcen", compact: "Kompakt · nur HP", off: "Ausblenden" },
+    default: "full",
+    onChange: () => tabletop?.tick(),
+  });
+  game.settings.register(ID, "hudVitalsCollapsed", {
+    scope: "client",
+    config: false,
+    type: Boolean,
+    default: false,
+    onChange: () => tabletop?.tick(),
+  });
   game.settings.register(ID, "tokenLinks", {
     scope: "client",
     config: false,

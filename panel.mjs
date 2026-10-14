@@ -257,7 +257,7 @@ export function createPanel({
           ? `+${action.score}`
           : action.kind === "weapon"
             ? `Treffer ≤ ${action.target ?? "—"}`
-            : action.cost > 0
+            : action.toggle && action.active ? "Aktiv · deaktivieren" : action.cost > 0
               ? `${action.cost} ${action.resource}`
               : "Ohne Ressourcenkosten";
       button.innerHTML = `${tabletop ? `<i class="fas ${tabletop.icon(action)}" aria-hidden="true"></i>` : ""}<span>${esc(action.label)}</span><small>${esc(detail)}</small>`;
@@ -275,7 +275,7 @@ export function createPanel({
     if (stage === "damage" && !hits.has(attackId)) return;
     let map;
     try {
-      map = tabletop?.prepare(
+      map = action.toggle && action.active ? undefined : tabletop?.prepare(
         action,
         attackId ? hits.get(attackId)?.map : undefined,
       );
@@ -328,10 +328,10 @@ export function createPanel({
       allowed &&= !(action.cost > 0) || action.current >= action.cost;
       form.insertAdjacentHTML(
         "beforeend",
-        `<p class="ss-description">${esc(action.description || "")}</p>${action.cost > 0 ? `<p>${action.cost} ${esc(action.resource)} · ${action.current ?? "—"} → ${(action.current ?? 0) - action.cost}</p><p>Kosten werden gespeichert, danach erscheint die Karte im öffentlichen Chat.</p>` : "<p>Ohne Ressourcenkosten · Fähigkeit im öffentlichen Chat anzeigen.</p>"}`,
+        `<p class="ss-description">${esc(action.description || "")}</p>${action.toggle && action.active ? "<p>Deaktivieren · ohne Ressourcenkosten.</p>" : action.cost > 0 ? `<p>${action.cost} ${esc(action.resource)} · ${action.current ?? "—"} → ${(action.current ?? 0) - action.cost}</p><p>Kosten werden gespeichert, danach erscheint die Karte im öffentlichen Chat.</p>` : "<p>Ohne Ressourcenkosten · Fähigkeit im öffentlichen Chat anzeigen.</p>"}`,
       );
     }
-    if (action.kind !== "free")
+    if (action.kind !== "free" && !(action.toggle && action.active))
       tabletop?.preview(
         form,
         action,
@@ -343,7 +343,7 @@ export function createPanel({
       );
     form.insertAdjacentHTML(
       "beforeend",
-      `<button type="submit" ${allowed ? "" : "disabled"}>${action.kind === "ability" ? (action.cost > 0 ? "Wirken & Kosten speichern" : "Wirken") : "Öffentlich würfeln"}</button><button type="button" data-back>Zurück</button>`,
+      `<button type="submit" ${allowed ? "" : "disabled"}>${action.kind === "ability" ? (action.toggle ? action.active ? "Deaktivieren" : "Aktivieren" : action.cost > 0 ? "Wirken & Kosten speichern" : "Wirken") : "Öffentlich würfeln"}</button><button type="button" data-back>Zurück</button>`,
     );
     form.querySelector("[data-back]").onclick = () => {
       selected = null;
@@ -367,7 +367,7 @@ export function createPanel({
         return;
       }
       if (
-        action.profile?.shape &&
+        !(action.toggle && action.active) && action.profile?.shape &&
         action.profile.shape !== "none" &&
         !selected.map?.area
       ) {
@@ -504,7 +504,7 @@ export function createPanel({
         hit,
         text:
           pending.action.kind === "ability"
-            ? `${pending.action.label} gewirkt`
+            ? `${pending.action.label} ${pending.action.toggle ? pending.action.active ? "deaktiviert" : "aktiviert" : "gewirkt"}`
             : `${r.total}${pending.stage === "attack" ? (hit ? " · Trefferprobe gelungen" : " · Verfehlt") : ""}`,
       };
       if (hit) hits.set(result.id, result);

@@ -1,3 +1,16 @@
+Sheetshift Bridge 0.6.0 — active ability modes and token effects
+
+- Optional Activate/Deactivate abilities, with one-time activation costs and free deactivation.
+- Atomic receipts save costs and active state together; retries never spend twice.
+- Sixteen curated looping token effects, attached to owned linked tokens until deactivation, with named-effect deduplication and scoped cleanup.
+- Add 17 party-inspired one-shot presets: wind and fist techniques, herbal healing, defensive reactions, luck, summoning and sweeping strikes. Total: 46 one-shot presets. New selections require the matching bridge capability before spending costs. Existing abilities and saved preferences are untouched.
+- Mode state survives save/reload and is restored when reconnecting the character. Gameplay modifiers remain manual.
+- Full, compact or hidden token bars; independently collapsible HUD vitals; no numeric line wrapping. Display choices persist per browser.
+
+Deploy the matching Sheetshift update, install bridge 0.6.0, reload and reconnect. Existing settings and GM status privacy remain unchanged.
+
+---
+
 Sheetshift Bridge 0.5.0 — expanded animation library
 
 - Add 29 curated animation choices using installed JB2A assets, including projectiles, bursts, circles and cosmetic teleport-style effects.

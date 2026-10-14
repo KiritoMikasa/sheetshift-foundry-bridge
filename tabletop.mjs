@@ -1,8 +1,9 @@
+import { createTokenEffects } from "./token-effects.mjs";
 import { createPrivateStatus } from "./private-status.mjs";
 import { createTokenLink } from "./token-link.mjs";
 import { createStatusSharing } from "./status-sharing.mjs";
 import { createMapActions } from "./map-actions.mjs";
-import { createTokenOverlays, vitalsMarkup } from "./token-overlays.mjs";
+import { createTokenOverlays, vitalsMarkup, tokenOverlayMode } from "./token-overlays.mjs";
 import { createCombatCompanion } from "./combat-companion.mjs";
 import { createRequestTracker, renderDashboard } from "./gm-dashboard.mjs";
 import { optionalModules, playAnimation } from "./animations.mjs";
@@ -28,6 +29,7 @@ export function createTabletop({ changed = () => {} } = {}) {
     sharing,
     getSnapshot: () => snapshot,
   });
+  const tokenEffects = createTokenEffects({ link, getSnapshot: () => snapshot });
   const combat = createCombatCompanion({ link, changed }),
     tracker = createRequestTracker();
   let hud, hudSignature, dashboard, dashboardBack, dashboardSignature;
@@ -53,6 +55,7 @@ export function createTabletop({ changed = () => {} } = {}) {
       void sharing.tick();
       combat.tick();
       overlays.draw();
+      void tokenEffects.sync().catch(error => console.warn("Sheetshift token effect:", error?.message));
       if (hud?.isConnected) api.renderHUD(hud);
       if (dashboard?.isConnected) {
         const signature = JSON.stringify({
@@ -117,7 +120,9 @@ export function createTabletop({ changed = () => {} } = {}) {
       }
       const actor = link.actor(),
         token = link.token(),
-        turn = combat.turn();
+        turn = combat.turn(),
+        overlayMode = tokenOverlayMode(),
+        vitalsCollapsed = game.settings.get("sheetshift-bridge", "hudVitalsCollapsed") === true;
       const sharingHint = !snapshot.tabletop.share
         ? "Status nur für dich"
         : !actor
@@ -137,12 +142,25 @@ export function createTabletop({ changed = () => {} } = {}) {
         vitals: snapshot.tabletop.vitals,
         turn: turn?.key,
         sharingHint,
+        overlayMode,
+        vitalsCollapsed,
       });
       if (hudSignature === signature && element.dataset.signature === signature)
         return;
       hudSignature = signature;
       element.dataset.signature = signature;
-      element.innerHTML = `<div class="ss-token-link"><strong>${esc(actor?.name || "Deinen Token verknüpfen")}</strong><small>${actor ? (token ? `Token: ${esc(token.name)}` : "Eigenen Token auswählen") : "Einmalig einen eigenen Foundry-Actor wählen"}</small><button type="button" data-link>${actor ? "Verknüpfung ändern" : "Actor verknüpfen"}</button></div>${vitalsMarkup(snapshot.tabletop.vitals)}<small class="ss-hint">${sharingHint}</small>${turn ? '<p class="ss-turn" role="status">✦ Du bist dran</p><button data-end-turn type="button">Zug beenden · GM bestätigen lassen</button>' : ""}`;
+      element.innerHTML = `<div class="ss-token-link"><strong>${esc(actor?.name || "Deinen Token verknüpfen")}</strong><small>${actor ? (token ? `Token: ${esc(token.name)}` : "Eigenen Token auswählen") : "Einmalig einen eigenen Foundry-Actor wählen"}</small><button type="button" data-link>${actor ? "Verknüpfung ändern" : "Actor verknüpfen"}</button></div><details class="ss-hud-vitals" data-vitals ${vitalsCollapsed ? "" : "open"}><summary>HP & Ressourcen</summary>${vitalsMarkup(snapshot.tabletop.vitals)}</details><label class="ss-overlay-control">Token-Anzeige<select data-overlay aria-label="Token-Anzeige">${Object.entries({ full: "HP & Ressourcen", compact: "Kompakt · nur HP", off: "Ausblenden" }).map(([key, text]) => `<option value="${key}" ${key === overlayMode ? "selected" : ""}>${text}</option>`).join("")}</select></label><small class="ss-hint">${sharingHint}</small>${turn ? '<p class="ss-turn" role="status">✦ Du bist dran</p><button data-end-turn type="button">Zug beenden · GM bestätigen lassen</button>' : ""}`;
+      const saveDisplaySetting = (key, value) => {
+        void game.settings.set("sheetshift-bridge", key, value).catch(() =>
+          ui.notifications.warn("Anzeige-Einstellung konnte nicht gespeichert werden."));
+      };
+      const vitals = element.querySelector("[data-vitals]");
+      vitals.ontoggle = () => {
+        if (!vitals.open !== vitalsCollapsed)
+          saveDisplaySetting("hudVitalsCollapsed", !vitals.open);
+      };
+      element.querySelector("[data-overlay]").onchange = (event) =>
+        saveDisplaySetting("tokenOverlayMode", event.target.value);
       element.querySelector("[data-link]").onclick = () =>
         api.bindingForm(element);
       const end = element.querySelector("[data-end-turn]");

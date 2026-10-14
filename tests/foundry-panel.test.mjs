@@ -153,3 +153,17 @@ test('rolling exactly the weapon Hit value keeps a confirmed-damage action', () 
   assert.equal(damage.actionId, 'weapon:0');
   assert.equal(damage.stage, 'damage');
 });
+
+test('active modes can deactivate without a linked token, available resource or area preview', () => {
+  const tabletop={prepare:()=>{throw new Error('No token');},preview:()=>assert.fail('Deactivation has no area preview'),clearPreview(){},snapshot(){},clear(){},renderAddons(){},icon:()=> 'fa-wand',validate:()=>false};
+  const f=fixture({tabletop});
+  f.panel.snapshot({id:'b'.repeat(32),character:'Hero',busy:false,attributes:[],actions:[{
+    id:'ability:0',label:'Demon Modus',kind:'ability',favorite:true,toggle:true,active:true,toggleKey:'mode',description:'Effect',resource:'Energie',cost:0,current:0,
+    profile:{icon:'wand',animation:'none',color:'red',target:'self',shape:'circle',size:5,sound:false,tokenEffect:'demon'},
+  }]});
+  f.elements().find(e=>e.className==='ss-action').onclick();
+  const sent=f.submit();
+  assert.equal(sent.actionId,'ability:0');assert.equal(sent.map,undefined);
+  f.panel.receipt({id:sent.id,result:{total:0,die:0,formula:'',messageId:'off'}});
+  assert.ok(f.elements().some(e=>e.innerHTML.includes('deaktiviert')));
+});

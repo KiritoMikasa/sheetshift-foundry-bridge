@@ -11,6 +11,7 @@ import {
   validMapContext,
 } from "./tabletop-model.mjs";
 export const ATTRIBUTES = ["KK", "GE", "KL", "MU", "KO", "CH", "FF", "IT"];
+const validModeKey = key => typeof key === "string" && key.trim().length > 0 && key.length <= 200;
 // Only dice terms and whole-number additions/subtractions; never Foundry data references or code.
 export function parseFreeFormula(value) {
   if (typeof value !== "string" || value.length > 80) return null;
@@ -70,6 +71,7 @@ export function validDice(value) {
 export function validActionRequest(r) {
   if (
     !r ||
+    (r.mode !== undefined && (r.kind !== "ability" || !validModeKey(r.mode?.key) || typeof r.mode.active !== "boolean" || (!r.mode.active && r.cost > 0))) ||
     (r.profile !== undefined && !validProfile(r.profile)) ||
     (r.map !== undefined && !validMapContext(r.map)) ||
     (r.checkId !== undefined && !isId(r.checkId))
@@ -154,6 +156,7 @@ export function validSnapshot(s) {
           isText(a.label) &&
           (a.profile === undefined || validProfile(a.profile)) &&
           typeof a.favorite === "boolean" &&
+          (a.toggle === undefined || (a.kind === "ability" && typeof a.toggle === "boolean" && typeof a.active === "boolean" && validModeKey(a.toggleKey))) &&
           (a.kind === "talent"
             ? isModifier(a.score) &&
               (a.talentKey === undefined || isText(a.talentKey)) &&

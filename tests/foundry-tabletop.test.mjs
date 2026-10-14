@@ -32,6 +32,8 @@ import {
 } from "../animations.mjs";
 import { createPrivateStatus } from "../private-status.mjs";
 import { ANIMATION_PRESETS } from "../animation-presets.mjs";
+import { createTokenOverlays } from "../token-overlays.mjs";
+import { createTokenEffects } from "../token-effects.mjs";
 import {
   statusKeyPair,
   sealStatus,
@@ -413,7 +415,16 @@ test("animation presets place projectiles, bursts, ground effects and self effec
     await run("ice");
     assert.equal(plays, 4, "missing assets are optional and do not play an invalid file");
     assert.equal(animationAsset("https://example.test/macro", globalThis.Sequencer.Database), null);
-    assert.equal(Object.keys(ANIMATION_PRESETS).length - 1, 29);
+    globalThis.Sequencer.Database.entryExists = () => true;
+    for (const [key, preset] of Object.entries(ANIMATION_PRESETS)) {
+      if (key === "none") continue;
+      const effect = await run(key);
+      assert.ok(effect?.file, `${key} resolves an installed asset`);
+      assert.deepEqual(effect.atLocation, [preset.mode === "self" || preset.mode === "projectile" ? source : target], key);
+      assert.equal(Boolean(effect.stretchTo), preset.mode === "projectile", `${key} stretches only projectiles`);
+      assert.equal(Boolean(effect.belowTokens), preset.mode === "ground", `${key} ground placement`);
+    }
+    assert.equal(moved, 0, "every catalog option remains cosmetic");
   } finally {
     delete globalThis.Sequence;
     delete globalThis.Sequencer;
@@ -540,4 +551,63 @@ test("area placement uses scene units and removes only its local drawing and lis
     "placement does not write actor, token, region, or condition documents",
   );
   delete globalThis.PIXI;
+});
+
+test('token display switches full, compact and hidden without changing values or leaking other player status', () => {
+  const f = fixture();
+  const originalDocument = globalThis.document;
+  let mode = 'full';
+  game.settings.get = () => mode;
+  canvas.ready = true;
+  canvas.stage = {worldTransform:{apply:p=>p}};
+  canvas.app = {canvas:{getBoundingClientRect:()=>({left:0,top:0})}};
+  f.source.y=0; f.source.h=100;
+  f.target.y=0; f.target.h=100;
+  let root;
+  globalThis.document = {body:{appendChild:node=>(root=node)},createElement:()=>({innerHTML:'',remove(){if(root===this)root=undefined;}})};
+  const values = {health:{current:79,max:79},resources:[{label:'Energie',current:72,max:72},{label:'Astralenergie',current:69,max:69}],conditions:[]};
+  const before = JSON.stringify(values);
+  const overlays = createTokenOverlays({link:{actor:()=>f.actor},sharing:{records:()=>[{actorId:'enemyActor',active:true,vitals:values}]},getSnapshot:()=>({tabletop:{vitals:values}})});
+  try {
+    overlays.draw();
+    assert.ok(root.innerHTML.includes('Astralenergie'));
+    assert.equal((root.innerHTML.match(/privater Status/g)||[]).length,1,'a player must not see other player records');
+    mode='compact';overlays.draw();
+    assert.ok(root.innerHTML.includes('HP <b>79 / 79</b>'));
+    assert.ok(!root.innerHTML.includes('Astralenergie'));
+    mode='off';overlays.draw();
+    assert.equal(root,undefined,'hidden mode removes existing overlays immediately');
+    mode='full';overlays.draw();
+    assert.ok(root.innerHTML.includes('Astralenergie'),'full view can be restored');
+    assert.equal(JSON.stringify(values),before,'display preferences never mutate saved values');
+  } finally {overlays.clear();globalThis.document=originalDocument;}
+});
+
+test('persistent modes attach to owned tokens, restore without duplicates and end only their own effects', async () => {
+  const f=fixture(); canvas.ready=true;
+  let snapshot={tabletop:{characterId:id},actions:[{toggle:true,active:true,toggleKey:'mode-one',profile:{...defaultProfile('ability'),tokenEffect:'demon'}}]};
+  let effects=[{data:{name:'unrelated',origin:'another-module'}}],created=0;
+  game.modules=new Map([['sequencer',{active:true}],['JB2A_DnD5e',{active:true}]]);
+  globalThis.Sequencer={Database:{entryExists:()=>true,getPathsUnder:p=>[`${p}.red`]},EffectManager:{
+    getEffects:({origin})=>effects.filter(e=>e.data.origin===origin),
+    endEffects:async({effects:ended,origin})=>{assert.ok(ended.every(e=>e.data.origin===origin));effects=effects.filter(e=>!ended.includes(e));},
+  }};
+  globalThis.Sequence=class {
+    effect(){const data={};this.data=data;const effect=new Proxy({}, {get(_o,key){return (...args)=>{data[key]=args[0]??true;return effect;};}});return effect;}
+    async play(){created++;effects.push({data:this.data});return new Promise(()=>{});}
+  };
+  const link={actor:()=>f.actor};
+  try {
+    const controller=createTokenEffects({link,getSnapshot:()=>snapshot});
+    await controller.sync();await controller.sync();
+    assert.equal(created,1);assert.equal(effects[1].data.attachTo,f.source);
+    assert.equal(effects[1].data.persist,true);assert.equal(effects[1].data.volume,0);
+    await createTokenEffects({link,getSnapshot:()=>snapshot}).sync();
+    assert.equal(created,1,'reloading the controller must reuse its existing named effect');
+    snapshot.actions.push({toggle:true,active:true,toggleKey:'mode-two',profile:{...defaultProfile('ability'),tokenEffect:'shield'}});
+    await controller.sync();assert.equal(effects.length,3);
+    snapshot.actions[0].active=false;await controller.sync();assert.equal(effects.length,2,'only one mode ends');
+    snapshot.actions[1].active=false;await controller.sync();assert.deepEqual(effects,[{data:{name:'unrelated',origin:'another-module'}}]);
+    snapshot.actions[0].active=true;link.actor=()=>null;await controller.sync();assert.equal(effects.length,1,'an unowned/unlinked token cannot get an effect');
+  } finally {delete globalThis.Sequencer;delete globalThis.Sequence;}
 });
